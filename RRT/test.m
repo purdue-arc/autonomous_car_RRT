@@ -1,3 +1,4 @@
+%this is a test file
 close all
 
 dt = 0.01;
