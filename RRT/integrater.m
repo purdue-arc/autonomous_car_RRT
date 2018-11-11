@@ -5,6 +5,6 @@ k2 = stateDerivatives(initial_state + k1./2, length, width, mass, vx, cf, cr, lf
 k3 = stateDerivatives(initial_state + k2./2, length, width, mass, vx, cf, cr, lf, lr, inertia, steeringAngle);
 k4 = stateDerivatives(initial_state + k3, length, width, mass, vx, cf, cr, lf, lr, inertia, steeringAngle);
 
-next_state = initial_state + dt/6*(k1 + 2*k2 + 2*k3 + k4);
+next_state = initial_state + dt/6 * (k1 + 2*k2 + 2*k3 + k4);
 
 end

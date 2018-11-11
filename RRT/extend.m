@@ -1,48 +1,61 @@
-function [updatedTree, newChildren] = extend(tree, x_rand, childrenIndices)
-    numNodes = size(tree, 1);
+function [state_tree, parents] = extend(state_tree, rand_pos, parents)
+    num_nodes = size(state_tree, 1);
+    
+    %%% Constants
+    
+    % Simulation
     dt = 0.1;
+    
+    % Control
+    steering_angle_range = pi/2;
+    max_velocity = 3;
+    velocity_std_dev = 1;
+    
+    % Physical
     length = 0.4;
     width = 0.2;
     mass = 4;
     inertia = 1;
     
-    cf = 0.1; %front cornering stiffness coeff
-    cr = 0.1; %rear cornering stiffness coeff
-    lf = length/2; %distance from center of gravity to front wheel
-    lr = length/2; %distance from center of gravity to rear wheel
+    cf = 0.1; % Front cornering stiffness coeff
+    cr = 0.1; % Rear cornering stiffness coeff
+    lf = length/2; % Distance from center of gravity to front wheel
+    lr = length/2; % Distance from center of gravity to rear wheel
 
-    steeringAngle = x_rand(1);
-    vx = x_rand(2);
-    newChildren = [];
-    %TODO: we need to add a way to store which node to run our random control vector
-    %This runs through whole tree and finds nearest point
-    for j = childrenIndices
-        minDis = 1000000;
-        state = tree(j,:);
-        index = 1;
-        for i = 1:1:numNodes
-            if(i ~= j)
-                dist = sqrt( (state(1)-tree(i,1))^2 + (state(2)-tree(i,2))^2 );
-                if (dist < minDis)
-                    minDis = dist;
-                    index = i;
-                end
-            end
+    rand_pos_x = rand_pos(1);
+    rand_pos_y = rand_pos(2);
+    
+    % This runs through whole tree and finds nearest point
+    min_dist = inf;
+    min_index = -1;
+    for i = 1:num_nodes
+        curr_state = state_tree(i, :);
+        curr_pos_x = curr_state(1);
+        curr_pos_y = curr_state(2);
+        % Archimedes distance
+        curr_dist = sqrt((rand_pos_x - curr_pos_x)^2 + (rand_pos_y - curr_pos_y)^2);
+        if curr_dist < min_dist
+            min_dist = curr_dist;
+            min_index = i;
         end
-        
-        index
-        x_new = integrater(tree(index, :), dt, length, width, mass, vx, cf, cr, lf, lr, inertia, steeringAngle);
-
-        numNodes = numNodes + 1;
-        newChildren = [newChildren, numNodes];
-        newChildren
-        plot(x_new(1), x_new(2), '*');
-        line([x_new(1), tree(index,1)], [x_new(2), tree(index,2)]);
-        tree(numNodes, :) = x_new;
     end
     
+    % From the selected node, come up with a random control vector (could
+    % experiment with weighting toward rand_pos in the future)
+    rand_steering_angle = rand(1) * steering_angle_range - steering_angle_range/2;
+    %rand_velocity = rand(1) * max_velocity; % Maybe use Gaussian in future to weight for low speeds?
+    rand_velocity = abs(normrnd(0, velocity_std_dev));
     
-    
-    
-    updatedTree = tree;
+        
+    % Come up with new state
+    new_state = integrater(state_tree(min_index, :), dt, length, width, mass, rand_velocity, cf, cr, lf, lr, inertia, rand_steering_angle);
+
+    % Add new state to tree
+    num_nodes = num_nodes + 1;
+    state_tree(num_nodes,:) = new_state;
+    parents(num_nodes) = min_index;
+        
+    % Plot for debugging
+    plot(new_state(1), new_state(2), '*');
+    line([new_state(1), state_tree(min_index,1)], [new_state(2), state_tree(min_index,2)]);
 end
