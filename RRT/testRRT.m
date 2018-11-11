@@ -1,16 +1,26 @@
 close all
 clear variables
-%initial_x = [0 0];
+
+% Arbitrary values for the test
+x_min = -10;
+x_max = 10;
+y_min = -10;
+y_max = 10;
+
 figure
 hold on
-state = [1, 1, 0, 0, 0]; %x,y center of gravity, theta, lateral speed(vy), yaw rate(r or thetadot)
+state = [0, 0, 0, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
+
 %tree(1,:) = cat(2, state, initial_x)
 tree(1,:) = state;
-children = 1;
+num_children = 1;
+
 for i = 0:1:20
-    x_rand = [rand(1)*pi/3-pi/6 rand(1)*3];
-    %x_rand = [rand(1)*60-30 rand(1)*3];
-    [tree, children] = extend(tree, x_rand, children);
+    % Create a new random position in the map
+    pos_rand = [rand(x_max - x_min) + x_min, rand(y_max - y_min) + y_min];
+    
+    % Pass this to extend function and add the resulting state to the array
+    [tree, num_children] = extend(tree, pos_rand, num_children);
 end
     
 % for i = 1:1:9
