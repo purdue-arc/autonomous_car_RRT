@@ -13,23 +13,25 @@ state = [0, 0, 0, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or 
 
 %tree(1,:) = cat(2, state, initial_x)
 state_tree(1,:) = state;
-parents = [0];
+parents = 0;
 
-for i = 0:1:2500
+for i = 1:2500
     % Create a new random position in the map
     rand_pos = [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
     
-    %plot(rand_pos(1), rand_pos(2), "o");
-    
     % Pass this to extend function and add the resulting state to the array
     [state_tree, parents] = extend(state_tree, rand_pos, parents);
-    %pause(.25);
 end
-    
-% for i = 1:1:9
-%     tree(i,1)
-%     tree(i,2)
-%     plot(tree(i,1), tree(i,2),'*')
-% end
+
+% Plot for debugging
+for i = 1:size(state_tree, 1)
+    curr_state = state_tree(i,:);
+    plot(curr_state(1), curr_state(2), '*');
+    % If it has a parent, plot a line
+    if parents(i) ~= 0
+        curr_parent = state_tree(parents(i),:);
+        line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)]);
+    end
+end
 
 

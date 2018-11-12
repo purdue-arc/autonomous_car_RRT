@@ -56,8 +56,4 @@ function [state_tree, parents] = extend(state_tree, rand_pos, parents)
     num_nodes = num_nodes + 1;
     state_tree(num_nodes,:) = new_state;
     parents(num_nodes) = min_index;
-        
-    % Plot for debugging
-    plot(new_state(1), new_state(2), '*');
-    line([new_state(1), state_tree(min_index,1)], [new_state(2), state_tree(min_index,2)]);
 end
