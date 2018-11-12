@@ -16,21 +16,18 @@ classdef AutoRallyCar
         %Constructor Contains initial state 6D0F + 1 time derivative + t0
         function obj = AutoRallyCar(State0,options)
             
-            
             obj.currentState = State0;
             obj.options = options;
-            obj.path = [];
+            obj.path = [State0'];
             
             obj.stepCount = 0;
         end
         
-        function obj = nextStep(obj, u) %input vector
-            
-            %Adding current State to PAST path
-            obj.path = [obj.path; obj.currentState']; %Each step is ROW
+
+        function obj = nextState(obj, u) %input vector
             
             % Constants given to constructor
-            tstep = obj.options(1);
+            dt = obj.options(1);
             m = obj.options(2);
             lf = obj.options(3);
             lr = obj.options(4);
@@ -64,24 +61,24 @@ classdef AutoRallyCar
                 fblx + fbrx)/m ) + ...
                 obj.currentState(5)*obj.currentState(12);
             
-            vx = obj.currentState(4) + ax * tstep;
+            vx = obj.currentState(4) + ax * dt;
             
-            px = obj.currentState(1) + vx*tstep + ax*(tstep*tstep);
+            px = obj.currentState(1) + vx*dt + ax*(dt*dt);
             
             
             ay = (((fflx + ffrx)*sin(del) + (ffly + ffry)*cos(del) + ...
                 fbly + fbry)/m) - obj.currentState(4)*obj.currentState(12);
             
-            vy = obj.currentState(5) + ay * tstep;
+            vy = obj.currentState(5) + ay * dt;
             
-            py = obj.currentState(2) + vy*tstep + ay*(tstep * tstep);
+            py = obj.currentState(2) + vy*dt + ay*(dt * dt);
             
             rdot = ( (((ffly + ffry)*cos(del) + (fflx + ffrx)*sin(del))*lf...
                  - (fbly + fbry)*lr)/Iz ); %yawdd
             
-            yaw = obj.currentState(12) + rdot*tstep;
+            yaw = obj.currentState(12) + rdot*dt;
             
-            yaw_ang = obj.currentState(9) + yaw*step + rdot*(tstep * tstep);
+            yaw_ang = obj.currentState(9) + yaw*dt + rdot*(dt * dt);
             
             
             %for 2D case
@@ -107,11 +104,14 @@ classdef AutoRallyCar
             obj.currentState(10) = roll;
             obj.currentState(11) = pitch;
             obj.currentState(12) = yaw;
-            obj.currentState(13) = obj.currentState(13) + tstep;
+            obj.currentState(13) = obj.currentState(13) + dt;
             
             
             
             obj.stepCount = obj.stepCount + 1;
+            
+           %Adding current State to path
+            obj.path = [obj.path; obj.currentState']; %Each step is ROW
             
         end
         
