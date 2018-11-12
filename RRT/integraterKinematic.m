@@ -7,6 +7,6 @@ delta_x = velocity_x * dt;
 delta_y = velocity_y * dt;
 delta_theta = velocity_theta * dt;
 
-next_state = initial_state + [delta_x, delta_y, delta_theta, 0, 0];
+next_state = [initial_state(1:3), 0, 0] + [delta_x, delta_y, delta_theta, velocity, 0];
 end
 
