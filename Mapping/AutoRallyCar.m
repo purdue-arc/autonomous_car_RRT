@@ -3,7 +3,7 @@ classdef AutoRallyCar
         % x y z vx vy vz rollAng pitchAng yawAng roll pitch yaw time        
         currentState 
         
-        % tstep m lf lr K C Ix Iy Iz
+        % tstep m lf lr K C Af CD Ix Iy Iz
         options
         
         path
@@ -33,9 +33,13 @@ classdef AutoRallyCar
             lr = obj.options(4);
             K = obj.options(5);
             C = obj.options(6);
-            Ix = obj.options(7);
-            Iy = obj.options(8);
-            Iz = obj.options(9);
+            Af = obj.options(7);
+            CD = obj.options(8);
+            Ix = obj.options(9);
+            Iy = obj.options(10);
+            Iz = obj.options(11);
+            
+            rho = 1.125;
             
 
             %CONTROL INPUT (Vk) conversion assuming input is tire forces for u(2:end)
@@ -59,22 +63,25 @@ classdef AutoRallyCar
             
             ax = ( ( (fflx + ffrx)*cos(del) - (ffly + ffry)*sin(del) + ...
                 fblx + fbrx)/m ) + ...
-                obj.currentState(5)*obj.currentState(12);
+                obj.currentState(5)*obj.currentState(12) - ...
+                0.5*CD*rho*Af*(obj.currentState(4))^2;
+            
+                    
+            ay = (((fflx + ffrx)*sin(del) + (ffly + ffry)*cos(del) + ...
+                fbly + fbry)/m) - obj.currentState(4)*obj.currentState(12);
+            
+            rdot = ( (((ffly + ffry)*cos(del) + (fflx + ffrx)*sin(del))*lf...
+                 - (fbly + fbry)*lr)/Iz ); %yawdd
+            
             
             vx = obj.currentState(4) + ax * dt;
             
             px = obj.currentState(1) + vx*dt + ax*(dt*dt);
             
             
-            ay = (((fflx + ffrx)*sin(del) + (ffly + ffry)*cos(del) + ...
-                fbly + fbry)/m) - obj.currentState(4)*obj.currentState(12);
-            
             vy = obj.currentState(5) + ay * dt;
             
             py = obj.currentState(2) + vy*dt + ay*(dt * dt);
-            
-            rdot = ( (((ffly + ffry)*cos(del) + (fflx + ffrx)*sin(del))*lf...
-                 - (fbly + fbry)*lr)/Iz ); %yawdd
             
             yaw = obj.currentState(12) + rdot*dt;
             
