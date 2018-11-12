@@ -16,9 +16,6 @@ classdef AutoRallyCar
         %Constructor Contains initial state 6D0F + 1 time derivative + t0
         function obj = AutoRallyCar(State0,options)
             
-            if (size(State0) ~= 13) || (size(options) ~= 9)
-                error('Vector lengths incorrect')
-            end
             
             obj.currentState = State0;
             obj.options = options;
