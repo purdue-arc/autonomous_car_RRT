@@ -34,4 +34,7 @@ for i = 1:size(state_tree, 1)
     end
 end
 
+viscircles([5,5],.5);
+[path, length] = astar(state_tree, parents, [5, 5], .5);
+
 
