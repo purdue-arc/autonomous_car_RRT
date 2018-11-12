@@ -15,7 +15,7 @@ state = [0, 0, 0, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or 
 state_tree(1,:) = state;
 parents = [0];
 
-for i = 0:1:1000
+for i = 0:1:2500
     % Create a new random position in the map
     rand_pos = [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
     

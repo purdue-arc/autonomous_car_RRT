@@ -8,7 +8,8 @@ function [state_tree, parents] = extend(state_tree, rand_pos, parents)
     
     % Control
     steering_angle_range = pi/2;
-    max_velocity = 3;
+    max_velocity = 5;
+    min_velocity = 1.5;
     velocity_std_dev = 1;
     
     % Physical
@@ -43,13 +44,14 @@ function [state_tree, parents] = extend(state_tree, rand_pos, parents)
     % From the selected node, come up with a random control vector (could
     % experiment with weighting toward rand_pos in the future)
     rand_steering_angle = rand(1) * steering_angle_range - steering_angle_range/2;
-    %rand_velocity = rand(1) * max_velocity; % Maybe use Gaussian in future to weight for low speeds?
-    rand_velocity = abs(normrnd(0, velocity_std_dev));
+    rand_velocity = rand(1) * (max_velocity - min_velocity) + min_velocity; % Maybe use Gaussian in future to weight for low speeds?
+    %rand_velocity = abs(normrnd(0, velocity_std_dev));
     
         
     % Come up with new state
-    new_state = integrater(state_tree(min_index, :), dt, length, width, mass, rand_velocity, cf, cr, lf, lr, inertia, rand_steering_angle);
-
+    %new_state = integrater(state_tree(min_index, :), dt, length, width, mass, rand_velocity, cf, cr, lf, lr, inertia, rand_steering_angle);
+    new_state = integraterKinematic(state_tree(min_index, :), dt, length, rand_velocity, rand_steering_angle);
+    
     % Add new state to tree
     num_nodes = num_nodes + 1;
     state_tree(num_nodes,:) = new_state;
