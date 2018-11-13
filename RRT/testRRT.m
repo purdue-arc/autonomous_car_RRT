@@ -11,16 +11,16 @@ figure
 hold on
 state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
 
-%tree(1,:) = cat(2, state, initial_x)
 state_tree(1,:) = state;
 parents = 0;
+control_tree = [0, 0];
 
 for i = 2:5000
     % Create a new random position in the map
     rand_pos = [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
     
     % Pass this to extend function and add the resulting state to the array
-    [state_tree, parents] = extend(state_tree, rand_pos, parents);
+    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_pos);
 end
 
 % Plot for debugging
@@ -35,6 +35,4 @@ for i = 1:size(state_tree, 1)
 end
 
 viscircles([5,5],.5);
-[path, length] = astar(state_tree, parents, [5, 5], .5);
-
-
+[path, length] = evaluateTree(state_tree, parents, [5, 5], .5);

@@ -1,4 +1,4 @@
-function [state_tree, parents] = extend(state_tree, rand_pos, parents)
+function [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_pos)
     num_nodes = size(state_tree, 1);
     
     %%% Constants
@@ -56,4 +56,5 @@ function [state_tree, parents] = extend(state_tree, rand_pos, parents)
     num_nodes = num_nodes + 1;
     state_tree(num_nodes,:) = new_state;
     parents(num_nodes) = min_index;
+    control_tree(num_nodes, :) = [rand_steering_angle, rand_velocity];
 end
