@@ -26,7 +26,7 @@ function [path, length] = evaluateTree(state_tree, parents, goal, radius)
             else
                 % Found shortest path
                 % It is possible that some tie and are later ignored . . .
-                path = transpose(flip(paths(:, i)));
+                path = transpose(flip(paths(1:length, i)));
                 return;
             end
         end

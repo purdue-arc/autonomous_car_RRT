@@ -30,9 +30,21 @@ for i = 1:size(state_tree, 1)
     % If it has a parent, plot a line
     if parents(i) ~= 0
         curr_parent = state_tree(parents(i),:);
-        line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)]);
+        line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'blue', 'LineStyle',':');
     end
 end
 
-viscircles([5,5],.5);
-[path, length] = evaluateTree(state_tree, parents, [5, 5], .5);
+goal = [rand(1) * (x_max - x_min+2) + x_min+2, rand(1) * (y_max - y_min+2) + y_min+2];
+radius = 0.25;
+
+viscircles(goal, radius);
+[path, length] = evaluateTree(state_tree, parents, goal, radius);
+
+% Plot for debugging
+states = state_tree(path(1:length), 1:2);
+line(states(:, 1), states(:, 2), 'Color', 'red');
+
+for i = 1:length
+    curr_state = state_tree(path(i), 1:2);
+    plot(curr_state(1), curr_state(2), 'hr');
+end
