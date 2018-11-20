@@ -34,7 +34,7 @@ for i = 1:size(state_tree, 1)
     end
 end
 
-goal = [rand(1) * (x_max - x_min+2) + x_min+2, rand(1) * (y_max - y_min+2) + y_min+2];
+goal = [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
 radius = 0.25;
 
 viscircles(goal, radius);
