@@ -92,13 +92,13 @@ classdef AutoRallyCar
             
             %SondersConst
             
-            wf = 1;
-            wr = 1;
+            wf = 0;
+            wr = 0;
             
-            hs = 0.11; %Sprung height
-            hc = 0.04; %Height of rolling pivot
+            hs = 0.115; %Sprung height
+            hc = 0.115; %Height of rolling pivot
             
-            Zs = 0.1;
+            Zs = 0.115;
             
             
             %Angular Accelerations
@@ -168,9 +168,9 @@ classdef AutoRallyCar
             fbry = u(9);
             
             
-            x = obj.currentState(1);
-            y = obj.currentState(2);
-            z = obj.currentState(3);
+            px = obj.currentState(1);
+            py = obj.currentState(2);
+            pz = obj.currentState(3);
             vx = obj.currentState(4);
             vy = obj.currentState(5);
             vz = obj.currentState(6);
@@ -188,22 +188,34 @@ classdef AutoRallyCar
              
              %1st Order taylor series expansion of translation terms
             
-            vx = obj.currentState(4) + ax * dt;
+            vx = vx + ax * dt;
             
-            px = obj.currentState(1) + vx*dt + ax*(dt*dt);
+            px = px + vx*dt + ax*(dt*dt);
             
            
-            vy = obj.currentState(5) + ay * dt;
+            vy = vy + ay * dt;
             
-            py = obj.currentState(2) + vy*dt + ay*(dt * dt);
+            py = py + vy*dt + ay*(dt * dt);
+           
+            vz = vz + az * dt;
+            
+            pz = pz + vz*dt + az*(dt * dt);
             
             
-            %Quaternion
-                        
             
-            yaw = obj.currentState(12) + yawdd*dt;
+            %Integration of angles
             
-            yaw_ang = obj.currentState(9) + yaw*dt + yawdd*(dt * dt);
+            roll = roll + rolldd*dt;
+            
+            rollAng = rollAng + roll*dt + rolldd*(dt * dt);
+            
+            pitch = pitch + pitchdd*dt;
+            
+            pitchAng = pitchAng + pitch*dt + pitchdd*(dt*dt);
+            
+            yaw = yaw + yawdd*dt;
+            
+            yawAng = yawAng + yaw*dt + yawdd*(dt * dt);
             
             
             
@@ -211,12 +223,12 @@ classdef AutoRallyCar
             
             
             %for 2D case
-            roll_ang = 0;
-            pitch_ang = 0;
-            roll = 0;
-            pitch = 0;
-            pz = 0;
-            vz = 0;
+%             rollAng = 0;
+%             pitchAng = 0;
+%             roll = 0;
+%             pitch = 0;
+%             pz = 0;
+%             vz = 0;
             
             
             % Now updating state info
@@ -227,9 +239,9 @@ classdef AutoRallyCar
             obj.currentState(4) = vx;
             obj.currentState(5) = vy;
             obj.currentState(6) = vz;
-            obj.currentState(7) = roll_ang;
-            obj.currentState(8) = pitch_ang;
-            obj.currentState(9) = yaw_ang;
+            obj.currentState(7) = rollAng;
+            obj.currentState(8) = pitchAng;
+            obj.currentState(9) = yawAng;
             obj.currentState(10) = roll;
             obj.currentState(11) = pitch;
             obj.currentState(12) = yaw;
