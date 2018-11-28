@@ -138,34 +138,11 @@ classdef AutoRallyCar
 
         function obj = nextState(obj, u) %input vector
             
-            % Constants given to constructor
+            % Constants given to constructor necessary here
             dt = obj.options(1);
-            m = obj.options(2);
-            lf = obj.options(3);
-            lr = obj.options(4);
-            K = obj.options(5);
-            C = obj.options(6);
-            Af = obj.options(7);
-            CD = obj.options(8);
-            Ix = obj.options(9);
-            Iy = obj.options(10);
-            Iz = obj.options(11);
-            
-            rho = 1.125;
-            
 
-            %CONTROL INPUT (Vk) conversion assuming input is tire forces for u(2:end)
             
-            del = u(1); %steering angle RADIANS
-            
-            fflx = u(2); %TIRE FORCES In newtons FOR NOW 
-            ffrx = u(3);
-            ffly = u(4); % f_{abc} a = fwd/back, b = left/right c = x,y dir
-            ffry = u(5);
-            fblx = u(6);
-            fbrx = u(7);
-            fbly = u(8);
-            fbry = u(9);
+            g = 9.8;
             
             
             px = obj.currentState(1);
@@ -184,24 +161,37 @@ classdef AutoRallyCar
              
             [ax,ay,az,rolldd,pitchdd,yawdd] = nextAcceleration(obj,u); 
              
+            if pz > 0 
+                az = az - g; %adding effect of gravity and making the assumption sprung height actual height
+            end
             
              
              %1st Order taylor series expansion of translation terms
             
-            vx = vx + ax * dt;
             
-            px = px + vx*dt + ax*(dt*dt);
+            px = px + vx*dt + ax*(dt*dt); %here the velocity is updated following the position
             
-           
-            vy = vy + ay * dt;
+            vx = vx + ax * dt; % so prior state velocity and posterior state acceleration are used
+
             
             py = py + vy*dt + ay*(dt * dt);
            
-            vz = vz + az * dt;
+            vy = vy + ay * dt;
             
+                        
             pz = pz + vz*dt + az*(dt * dt);
             
+            vz = vz + az * dt;
+
             
+            %offset from center of mass to ground:
+            
+            hCMoffset = 0.02;
+            
+            if pz < -hCMoffset
+                pz = -hCMoffset; %Maintaining a solid level ground
+            end
+              
             
             %Integration of angles
             
@@ -217,10 +207,7 @@ classdef AutoRallyCar
             
             yawAng = yawAng + yaw*dt + yawdd*(dt * dt);
             
-            
-            
-            
-            
+                        
             
             %for 2D case
 %             rollAng = 0;
@@ -253,8 +240,6 @@ classdef AutoRallyCar
             obj.path = [obj.path; obj.currentState']; %Each step is ROW
             
         end
-        
-        
         
         
     end
