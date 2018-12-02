@@ -23,8 +23,7 @@ classdef AutoRallyCar
             obj.stepCount = 0;
         end
         
-
-        function obj = nextState(obj, u) %input vector
+        function [ax,ay,az,rolldd,pitchdd,yawdd] = nextAcceleration(obj,u)
             
             % Constants given to constructor
             dt = obj.options(1);
@@ -40,8 +39,22 @@ classdef AutoRallyCar
             Iz = obj.options(11);
             
             rho = 1.125;
-            
+            g = 9.8;
 
+            x = obj.currentState(1);
+            y = obj.currentState(2);
+            z = obj.currentState(3);
+            vx = obj.currentState(4);
+            vy = obj.currentState(5);
+            vz = obj.currentState(6);
+            rollAng = obj.currentState(7);
+            pitchAng = obj.currentState(8);
+            yawAng = obj.currentState(9);
+            roll = obj.currentState(10);
+            pitch = obj.currentState(11);
+            yaw = obj.currentState(12);
+                        
+            
             %CONTROL INPUT (Vk) conversion assuming input is tire forces for u(2:end)
             
             del = u(1); %steering angle RADIANS
@@ -61,40 +74,148 @@ classdef AutoRallyCar
             %State AFTER time step using 1st Taylor Approx for Velocity 
             %and 2nd for Position
             
-            ax = ( ( (fflx + ffrx)*cos(del) - (ffly + ffry)*sin(del) + ...
-                fblx + fbrx)/m ) + ...
-                obj.currentState(5)*obj.currentState(12) - ...
-                0.5*CD*rho*Af*(obj.currentState(4))^2;
             
+            %Cartesian acceleration terms
+            ax = ( ( (fflx + ffrx)*cos(del) - (ffly + ffry)*sin(del) + ...
+                fblx + fbrx)/m ) + vy*yaw - 0.5*CD*rho*Af*(vx)^2;
+             
                     
             ay = (((fflx + ffrx)*sin(del) + (ffly + ffry)*cos(del) + ...
-                fbly + fbry)/m) - obj.currentState(4)*obj.currentState(12);
-            
-            rdot = ( (((ffly + ffry)*cos(del) + (fflx + ffrx)*sin(del))*lf...
-                 - (fbly + fbry)*lr)/Iz ); %yawdd
+                fbly + fbry)/m) - vx*yaw;
             
             
-            vx = obj.currentState(4) + ax * dt;
+            %Sprung mass vertical acceleration
+            az = (-2*(2*K)*pitch - 2*(2*C)*vz + 2*(lf*K - lr*K)*rollAng ...
+                + 2*(lf*C - lr*C)*pitch)/(m);
             
-            px = obj.currentState(1) + vx*dt + ax*(dt*dt);
             
             
-            vy = obj.currentState(5) + ay * dt;
+            %SondersConst
             
-            py = obj.currentState(2) + vy*dt + ay*(dt * dt);
+            wf = 0;
+            wr = 0;
             
-            yaw = obj.currentState(12) + rdot*dt;
+            hs = 0.115; %Sprung height
+            hc = 0.115; %Height of rolling pivot
             
-            yaw_ang = obj.currentState(9) + yaw*dt + rdot*(dt * dt);
+            Zs = 0.115;
             
+            
+            %Angular Accelerations
+            
+            r1  = ( (-1*(wf*wf*K + wr*wr*K)) /2); %Spring Stiffness
+            
+            r2 = ((-1*(wf*wf*C +wr*wr*C))/2); %Dashpot
+            
+            r3 = m*g*sin(rollAng) + m*ay*cos(rollAng); %Due to acceleration from input
+            
+            
+            rolldd = ((r1*rollAng + r2*roll + r3*(hs - hc))/(Ix)); %roll acceleration at step due to input
+            
+            
+            p1 = 2*(lf*K - lr*K);
+            
+            p2 = 2*(lf*C - lr*C);
+            
+            p3 = -2*(lf*lf*K + lr*lr*K);
+          
+            p4 = -2*(lf*lf*C + lr*lr*C);
+            
+            p5 = m*g*sin(pitchAng) + m*ax*cos(pitchAng);
+            
+            pitchdd = (p1*Zs + p2*vz + ...
+                p3*pitchAng + p4*pitch ...
+                 + p5*hs )/(Iy); %pitch acceleration at step due to input
+            
+            
+            yawdd = ( (((ffly + ffry)*cos(del) + (fflx + ffrx)*sin(del))*lf...
+                 - (fbly + fbry)*lr)/Iz ); %yaw acceleration at step due to input
+            
+            
+            
+            
+        end
+
+        function obj = nextState(obj, u) %input vector
+            
+            % Constants given to constructor necessary here
+            dt = obj.options(1);
+
+            
+            g = 9.8;
+            
+            
+            px = obj.currentState(1);
+            py = obj.currentState(2);
+            pz = obj.currentState(3);
+            vx = obj.currentState(4);
+            vy = obj.currentState(5);
+            vz = obj.currentState(6);
+            rollAng = obj.currentState(7);
+            pitchAng = obj.currentState(8);
+            yawAng = obj.currentState(9);
+            roll = obj.currentState(10);
+            pitch = obj.currentState(11);
+            yaw = obj.currentState(12);
+             
+             
+            [ax,ay,az,rolldd,pitchdd,yawdd] = nextAcceleration(obj,u); 
+             
+            if pz > 0 
+                az = az - g; %adding effect of gravity and making the assumption sprung height actual height
+            end
+            
+             
+             %1st Order taylor series expansion of translation terms
+            
+            
+            px = px + vx*dt + ax*(dt*dt); %here the velocity is updated following the position
+            
+            vx = vx + ax * dt; % so prior state velocity and posterior state acceleration are used
+
+            
+            py = py + vy*dt + ay*(dt * dt);
+           
+            vy = vy + ay * dt;
+            
+                        
+            pz = pz + vz*dt + az*(dt * dt);
+            
+            vz = vz + az * dt;
+
+            
+            %offset from center of mass to ground:
+            
+            hCMoffset = 0.02;
+            
+            if pz < -hCMoffset
+                pz = -hCMoffset; %Maintaining a solid level ground
+            end
+              
+            
+            %Integration of angles
+            
+            roll = roll + rolldd*dt;
+            
+            rollAng = rollAng + roll*dt + rolldd*(dt * dt);
+            
+            pitch = pitch + pitchdd*dt;
+            
+            pitchAng = pitchAng + pitch*dt + pitchdd*(dt*dt);
+            
+            yaw = yaw + yawdd*dt;
+            
+            yawAng = yawAng + yaw*dt + yawdd*(dt * dt);
+            
+                        
             
             %for 2D case
-            roll_ang = 0;
-            pitch_ang = 0;
-            roll = 0;
-            pitch = 0;
-            pz = 0;
-            vz = 0;
+%             rollAng = 0;
+%             pitchAng = 0;
+%             roll = 0;
+%             pitch = 0;
+%             pz = 0;
+%             vz = 0;
             
             
             % Now updating state info
@@ -105,15 +226,13 @@ classdef AutoRallyCar
             obj.currentState(4) = vx;
             obj.currentState(5) = vy;
             obj.currentState(6) = vz;
-            obj.currentState(7) = roll_ang;
-            obj.currentState(8) = pitch_ang;
-            obj.currentState(9) = yaw_ang;
+            obj.currentState(7) = rollAng;
+            obj.currentState(8) = pitchAng;
+            obj.currentState(9) = yawAng;
             obj.currentState(10) = roll;
             obj.currentState(11) = pitch;
             obj.currentState(12) = yaw;
             obj.currentState(13) = obj.currentState(13) + dt;
-            
-            
             
             obj.stepCount = obj.stepCount + 1;
             
@@ -121,8 +240,6 @@ classdef AutoRallyCar
             obj.path = [obj.path; obj.currentState']; %Each step is ROW
             
         end
-        
-        
         
         
     end
