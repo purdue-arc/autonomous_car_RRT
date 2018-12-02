@@ -8,8 +8,8 @@ dt = 10*10^(-3);
 m = 1;
 lf = 0.15;
 lr = 0.15;
-K = 200; %N/M
-C = 20;
+K = 20; %N/M
+C = 100;
 Izz = 0.0086; % Assumed Cuboid Longitudinal = 0.3 Lateral = 0.115, m = 1kg
 Iyy = 0.0086; %Assuming lateral aprroximately = height
 Ixx = 0.002204; %With assumptions of Cuboid and lat = height = 0.115
