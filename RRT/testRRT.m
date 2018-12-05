@@ -10,7 +10,7 @@ radius = 0.25;
 
 % Plot / video export values
 plot_result = true;
-create_video = true;
+create_video = false;
 
 state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
 
@@ -36,11 +36,10 @@ if plot_result
     hold on;
     axis([x_min x_max y_min y_max], 'square');
     if create_video
-        set(gcf, 'Position', [0 0 1920 1080]);
+        set(gcf, 'Position', [0 0 1280 720]);
         set(gcf,'menubar','none')
-        vid = VideoWriter('RRT_example');
+        vid = VideoWriter('RRT_example', 'MPEG-4');
         vid.FrameRate = 60;
-        vid.Quality = 100;
         open(vid);
     end
     
@@ -58,9 +57,9 @@ if plot_result
         if create_video
             frame = getframe(gcf);
             writeVideo(vid, frame);
-            if mod(i,25) == 0
-                fprintf('progress: %d / %d\n', i, size(state_tree,1));
-            end
+        end
+        if mod(i,25) == 0
+            fprintf('progress: %d / %d\n', i, size(state_tree,1));
         end
     end
     
@@ -86,9 +85,9 @@ if plot_result
         if create_video
             frame = getframe(gcf);
             writeVideo(vid, frame);
-            if mod(i,25) == 0
-                fprintf('progress: %d / %d\n', i, length);
-            end
+        end
+        if mod(i,25) == 0
+            fprintf('progress: %d / %d\n', i, length);
         end
     end
 
