@@ -16,46 +16,62 @@ simple_map = [0 0 0 0 1;
           
 % This is the "high res" map that we will be using. Will assume 10 meter by
 % 10 meter with resolution of 10 cm
-true_map = 
+true_map = zeros(100,100);
 
-figure
-hold on
+% Need to populate the true map with values 
+for i=1:5
+    for j=1:5
+        if simple_map(i,j) == 1
+            % Fill in that block
+            for k=(1+20*(i-1)):(20+20*(i-1))
+                for l=(1+20*(j-1)):(20+20*(j-1))
+                    true_map(k,l) = 1;
+                end
+            end
+        end
+    end
+end
+
+% Display the map
+colormap(flipud(gray));
+image(true_map,'CDataMapping','scaled');
+
 state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
 
 state_tree(1,:) = state;
 parents = 0;
 control_tree = [0, 0];
 
-for i = 2:5000
-    % Create a new random position in the map
-    rand_pos = [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
-    
-    % Pass this to extend function and add the resulting state to the array
-    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_pos);
-end
-
-% Plot for debugging
-for i = 1:size(state_tree, 1)
-    curr_state = state_tree(i,:);
-    plot(curr_state(1), curr_state(2), '*');
-    % If it has a parent, plot a line
-    if parents(i) ~= 0
-        curr_parent = state_tree(parents(i),:);
-        line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'blue', 'LineStyle',':');
-    end
-end
-
-goal = [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
-radius = 0.25;
-
-viscircles(goal, radius);
-[path, length] = evaluateTree(state_tree, parents, goal, radius);
-
-% Plot for debugging
-states = state_tree(path(1:length), 1:2);
-line(states(:, 1), states(:, 2), 'Color', 'red');
-
-for i = 1:length
-    curr_state = state_tree(path(i), 1:2);
-    plot(curr_state(1), curr_state(2), 'hr');
-end
+% for i = 2:5000
+%     % Create a new random position in the map
+%     rand_pos = [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
+% 
+%     % Pass this to extend function and add the resulting state to the array
+%     [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_pos);
+% end
+% 
+% % Plot for debugging
+% for i = 1:size(state_tree, 1)
+%     curr_state = state_tree(i,:);
+%     plot(curr_state(1), curr_state(2), '*');
+%     % If it has a parent, plot a line
+%     if parents(i) ~= 0
+%         curr_parent = state_tree(parents(i),:);
+%         line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'blue', 'LineStyle',':');
+%     end
+% end
+% 
+% goal = [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
+% radius = 0.25;
+% 
+% viscircles(goal, radius);
+% [path, length] = evaluateTree(state_tree, parents, goal, radius);
+% 
+% % Plot for debugging
+% states = state_tree(path(1:length), 1:2);
+% line(states(:, 1), states(:, 2), 'Color', 'red');
+% 
+% for i = 1:length
+%     curr_state = state_tree(path(i), 1:2);
+%     plot(curr_state(1), curr_state(2), 'hr');
+% end
