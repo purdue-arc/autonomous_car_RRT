@@ -1,4 +1,4 @@
-function [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_pos)
+function [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_funct, limits)
     num_nodes = size(state_tree, 1);
     
     %%% Constants
@@ -22,6 +22,8 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
     cr = 0.1; % Rear cornering stiffness coeff
     lf = length/2; % Distance from center of gravity to front wheel
     lr = length/2; % Distance from center of gravity to rear wheel
+    
+    rand_pos = rand_funct();
 
     rand_pos_x = rand_pos(1);
     rand_pos_y = rand_pos(2);
