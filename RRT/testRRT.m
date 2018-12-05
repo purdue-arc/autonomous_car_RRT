@@ -27,17 +27,20 @@ for i = 2:50
 end
 
 % Find path
-goal = [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
+goal = [rand(1) * (x_max - x_min - 2*radius) + x_min + radius, rand(1) * (y_max - y_min - 2*radius) + y_min + radius];
 [path, length] = evaluateTree(state_tree, parents, goal, radius);
 
 % Plot for debugging / video export
 if plot_result
-    figure('Position', [0 0 1920 1080]);
-    hold on
-    axis([0 10 0 10]);
+    figure;
+    hold on;
+    axis([0 10 0 10], 'square');
     if create_video
+        set(gcf, 'Position', [0 0 1920 1080]);
+        set(gcf,'menubar','none')
         vid = VideoWriter('RRT_example');
         vid.FrameRate = 10;
+        vid.Quality = 100;
         open(vid);
     end
 
