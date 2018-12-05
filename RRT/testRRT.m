@@ -7,6 +7,14 @@ x_max = 10;
 y_min = 0;
 y_max = 10;
 
+% Plot / video export values
+create_video = true;
+file_name = "rrt.avi";
+frame_rate = 10;
+point_color = 1;
+active_color = 1;
+plot_rand = true;
+
 figure
 hold on
 state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
@@ -23,7 +31,7 @@ for i = 2:5000
     [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_pos);
 end
 
-% Plot for debugging
+% Plot for debugging / video export
 for i = 1:size(state_tree, 1)
     curr_state = state_tree(i,:);
     plot(curr_state(1), curr_state(2), '*');
@@ -33,6 +41,7 @@ for i = 1:size(state_tree, 1)
         line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'blue', 'LineStyle',':');
     end
 end
+
 
 goal = [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
 radius = 0.25;
