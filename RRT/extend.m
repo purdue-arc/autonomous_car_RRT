@@ -23,11 +23,8 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
     lf = length/2; % Distance from center of gravity to front wheel
     lr = length/2; % Distance from center of gravity to rear wheel
     
-    for i = 1:100 % Up to 10 tries before it aborts
-        rand_pos = rand_funct();
-
-        rand_pos_x = rand_pos(1);
-        rand_pos_y = rand_pos(2);
+    for i = 1:100 % Up to 100 tries before it aborts
+        [rand_pos_x, rand_pos_y] = rand_funct();
 
         % This runs through whole tree and finds nearest point
         min_dist = inf;
