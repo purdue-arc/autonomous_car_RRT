@@ -10,8 +10,8 @@ radius = 0.25;
 
 % Plot / video export values
 plot_result = true;
-create_video = true;
-create_imgs = true;
+create_video = false;
+create_imgs = false;
 
 state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
 
@@ -98,18 +98,18 @@ if plot_result
 
     if create_video
         close(vid);
-        if create_imgs
-            % Export the final frame as an image too
-            [Image, Map] = frame2im(getframe(gcf));
-            imwrite(Image, 'RRT_example.png');
-            for i = 1:size(plot_array,1)
-                set(plot_array(i,1),'Visible','off');
-                if parents(i) ~= 0
-                    set(plot_array(i,2),'Visible','off');
-                end
+    end
+    if create_imgs
+        % Export the final frame as an image too
+        [Image, ~] = frame2im(getframe(gcf));
+        imwrite(Image, 'RRT_example.png');
+        for i = 1:size(plot_array,1)
+            set(plot_array(i,1),'Visible','off');
+            if parents(i) ~= 0
+                set(plot_array(i,2),'Visible','off');
             end
-            [Image, Map] = frame2im(getframe(gcf));
-            imwrite(Image, 'RRT_example_path_only.png');
         end
+        [Image, ~] = frame2im(getframe(gcf));
+        imwrite(Image, 'RRT_example_path_only.png');
     end
 end
