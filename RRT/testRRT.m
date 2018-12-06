@@ -69,84 +69,84 @@ if plot_result
     % Axis
     axis([x_min x_max y_min y_max], 'square');
     plot_axis = gca;
-    map_axis = axes('Position',plot_axis.Position,'XAxisLocation','top','YAxisLocation','right','Color','none','YDir','reverse');
+    map_axis = axes('Position',plot_axis.Position,'XAxisLocation','top','YAxisLocation','right','YDir','reverse');
     axis([0 100 0 100], 'square');
     % Display the map
     colormap(flipud(gray));
     imagesc('CData',map,'Parent',map_axis);
     % Set plot axis to current
     axes(plot_axis);
+    set(gca,'Color','none');
     if create_video
         set(gcf,'menubar','none')
         vid = VideoWriter('RRT_example', 'MPEG-4');
         vid.FrameRate = 60;
         open(vid);
     end
+    plot_array = [];
+    for i = 1:size(state_tree, 1)
+        curr_state = state_tree(i,:);
+        new_point = plot(curr_state(1), curr_state(2), '*');
+        plot_array(i,1) = new_point; % Add
+        % If it has a parent, plot a line
+        if parents(i) ~= 0
+            curr_parent = state_tree(parents(i),:);
+            new_line = line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'blue', 'LineStyle',':');
+            plot_array(i,2) = new_line;
+        end
+        if create_video
+            frame = getframe(gcf);
+            writeVideo(vid, frame);
+        end
+        if mod(i,25) == 0
+            fprintf('progress: %d / %d\n', i, size(state_tree,1));
+        end
+    end
     
-%     plot_array = [];
-%     for i = 1:size(state_tree, 1)
-%         curr_state = state_tree(i,:);
-%         new_point = plot(curr_state(1), curr_state(2), '*');
-%         plot_array(i,1) = new_point; % Add
-%         % If it has a parent, plot a line
-%         if parents(i) ~= 0
-%             curr_parent = state_tree(parents(i),:);
-%             new_line = line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'blue', 'LineStyle',':');
-%             plot_array(i,2) = new_line;
-%         end
-%         if create_video
-%             frame = getframe(gcf);
-%             writeVideo(vid, frame);
-%         end
-%         if mod(i,25) == 0
-%             fprintf('progress: %d / %d\n', i, size(state_tree,1));
-%         end
-%     end
-%     
-%     % Visualize goal
-%     viscircles(goal, radius);
-%     if create_video
-%         frame = getframe(gcf);
-%         writeVideo(vid, frame);
-%     end
-%     
-%     % Visualize path to goal
-%     for i = 1:length
-%         index = path(i);
-%         curr_state = state_tree(index, 1:2);
-%         plot(curr_state(1), curr_state(2), '*r');
-%         set(plot_array(i,1),'Visible','off');
-%         % If it has a parent, plot a line
-%         if parents(index) ~= 0
-%             curr_parent = state_tree(parents(index),1:2);
-%             line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'red');
-%             set(plot_array(i,2),'Visible','off');
-%         end
-%         if create_video
-%             frame = getframe(gcf);
-%             writeVideo(vid, frame);
-%         end
-%         if mod(i,25) == 0
-%             fprintf('progress: %d / %d\n', i, length);
-%         end
-%     end
-% 
-%     if create_video
-%         close(vid);
-%     end
-%     if create_imgs
-%         % Export the final frame as an image too
-%         [Image, ~] = frame2im(getframe(gcf));
-%         imwrite(Image, 'RRT_example.png');
-%         for i = 1:size(plot_array,1)
-%             set(plot_array(i,1),'Visible','off');
-%             if parents(i) ~= 0
-%                 set(plot_array(i,2),'Visible','off');
-%             end
-%         end
-%         [Image, ~] = frame2im(getframe(gcf));
-%         imwrite(Image, 'RRT_example_path_only.png');
-%     end
+    % Visualize goal
+    viscircles(goal, radius);
+    if create_video
+        frame = getframe(gcf);
+        writeVideo(vid, frame);
+    end
+    
+    % Visualize path to goal
+    for i = 1:length
+        index = path(i);
+        curr_state = state_tree(index, 1:2);
+        plot(curr_state(1), curr_state(2), '*r');
+        set(plot_array(i,1),'Visible','off');
+        % If it has a parent, plot a line
+        if parents(index) ~= 0
+            curr_parent = state_tree(parents(index),1:2);
+            line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'red');
+            set(plot_array(i,2),'Visible','off');
+        end
+        if create_video
+            frame = getframe(gcf);
+            writeVideo(vid, frame);
+        end
+        if mod(i,25) == 0
+            fprintf('progress: %d / %d\n', i, length);
+        end
+    end
+
+    if create_video
+        close(vid);
+    end
+    if create_imgs
+        % Export the final frame as an image too
+        [Image, ~] = frame2im(getframe(gcf));
+        imwrite(Image, 'RRT_example.png');
+        for i = 1:size(plot_array,1)
+            set(plot_array(i,1),'Visible','off');
+            if parents(i) ~= 0
+                set(plot_array(i,2),'Visible','off');
+            end
+        end
+        [Image, ~] = frame2im(getframe(gcf));
+        imwrite(Image, 'RRT_example_path_only.png');
+    end
 end
 
 function valid = check_map(new_state, x_min, x_max, y_min, y_max, map)
