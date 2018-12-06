@@ -68,15 +68,9 @@ if plot_result
     set(gcf, 'Position', [0 0 1280 720]);
     % Axis
     axis([x_min x_max y_min y_max], 'square');
-    plot_axis = gca;
-    map_axis = axes('Position',plot_axis.Position,'XAxisLocation','top','YAxisLocation','right','YDir','reverse');
-    axis([0 100 0 100], 'square');
     % Display the map
     colormap(flipud(gray));
-    imagesc('CData',map,'Parent',map_axis);
-    % Set plot axis to current
-    axes(plot_axis);
-    set(gca,'Color','none');
+    imagesc('XData',[x_min x_max],'YData',[y_max y_min],'CData',map);
     if create_video
         set(gcf,'menubar','none')
         vid = VideoWriter('RRT_example', 'MPEG-4');
