@@ -10,8 +10,8 @@ radius = 0.25;
 
 % Plot / video export values
 plot_result = true;
-create_video = false;
-create_imgs = false;
+create_video = true;
+create_imgs = true;
 
 % Values for exploration
 simple_map = [0 0 0 0 1;
@@ -70,7 +70,7 @@ if plot_result
     axis([x_min x_max y_min y_max], 'square');
     % Display the map
     colormap(flipud(gray));
-    imagesc('XData',[x_min x_max],'YData',[y_max y_min],'CData',map);
+    imagesc('XData',[0.05 9.95],'YData',[9.95 0.05],'CData',map);
     if create_video
         set(gcf,'menubar','none')
         vid = VideoWriter('RRT_example', 'MPEG-4');
@@ -91,9 +91,9 @@ if plot_result
         if create_video
             frame = getframe(gcf);
             writeVideo(vid, frame);
-        end
-        if mod(i,25) == 0
-            fprintf('progress: %d / %d\n', i, size(state_tree,1));
+            if mod(i,25) == 0
+                fprintf('progress: %d / %d\n', i, size(state_tree,1));
+            end
         end
     end
     
@@ -119,10 +119,11 @@ if plot_result
         if create_video
             frame = getframe(gcf);
             writeVideo(vid, frame);
+            if mod(i,25) == 0
+                fprintf('progress: %d / %d\n', i, length);
+            end
         end
-        if mod(i,25) == 0
-            fprintf('progress: %d / %d\n', i, length);
-        end
+
     end
 
     if create_video

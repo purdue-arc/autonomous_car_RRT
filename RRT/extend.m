@@ -23,7 +23,7 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
     lf = length/2; % Distance from center of gravity to front wheel
     lr = length/2; % Distance from center of gravity to rear wheel
     
-    for i = 1:10 % Up to 10 tries before it aborts
+    for i = 1:100 % Up to 10 tries before it aborts
         rand_pos = rand_funct();
 
         rand_pos_x = rand_pos(1);
@@ -60,9 +60,9 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
             % Otherwise, try again
             break;
         end
-        if i == 10
+        if i == 100
             % Failed
-            fprintf('Failed to generate state in bounds for point at inded %d\n', num_nodes+1);
+            fprintf('Failed to generate state in bounds for point at index %d\n', num_nodes+1);
         end
     end
     
