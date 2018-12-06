@@ -22,9 +22,12 @@ control_tree = [0, 0];
 % Function handle for creating random points
 rand_pos_funct = @() [rand(1) * (x_max - x_min) + x_min, rand(1) * (y_max - y_min) + y_min];
 
+% Function handle for checking if a state is valid
+check_state_funct = @(new_state) new_state(1) > x_min && new_state(1) < x_max && new_state(2) > y_min && new_state(2) < y_max;
+
 for i = 2:5000
     % Pass this to extend function and add the resulting state to the array
-    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_pos_funct, [x_min, x_max, y_min, y_max]);
+    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_pos_funct, check_state_funct);
 end
 
 % Find path

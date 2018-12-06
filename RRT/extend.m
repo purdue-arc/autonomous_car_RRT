@@ -1,4 +1,4 @@
-function [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_funct, limits)
+function [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_funct, check_state_funct)
     num_nodes = size(state_tree, 1);
     
     %%% Constants
@@ -55,7 +55,7 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
         %new_state = integrater(state_tree(min_index, :), dt, length, width, mass, rand_velocity, cf, cr, lf, lr, inertia, rand_steering_angle);
         new_state = integraterKinematic(state_tree(min_index, :), dt, length, rand_velocity, rand_steering_angle);
         
-        if new_state(1) > limits(1) && new_state(1) < limits(2) && new_state(2) > limits(3) && new_state(2) < limits(4)
+        if check_state_funct(new_state)
             % Within bounds, continue
             % Otherwise, try again
             break;
