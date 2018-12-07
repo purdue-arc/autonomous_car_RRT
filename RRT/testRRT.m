@@ -9,9 +9,10 @@ y_max = 10;
 radius = 0.25;
 
 % Plot / video export values
+use_obstacles = true;
 plot_result = true;
-create_video = true;
-create_imgs = true;
+create_video = false;
+create_imgs = false;
 
 % Values for exploration
 simple_map = [0 0 0 0 1;
@@ -25,13 +26,15 @@ simple_map = [0 0 0 0 1;
 map = zeros(100,100);
 
 % Need to populate the true map with values 
-for i=1:5
-    for j=1:5
-        if simple_map(i,j) == 1
-            % Fill in that block
-            for k=(1+20*(i-1)):(20+20*(i-1))
-                for l=(1+20*(j-1)):(20+20*(j-1))
-                    map(k,l) = 1;
+if use_obstacles
+    for i=1:5
+        for j=1:5
+            if simple_map(i,j) == 1
+                % Fill in that block
+                for k=(1+20*(i-1)):(20+20*(i-1))
+                    for l=(1+20*(j-1)):(20+20*(j-1))
+                        map(k,l) = 1;
+                    end
                 end
             end
         end
@@ -68,8 +71,10 @@ if plot_result
     % Axis
     axis([x_min x_max y_min y_max], 'square');
     % Display the map
-    colormap(flipud(gray));
-    imagesc('XData',[0.05 9.95],'YData',[9.95 0.05],'CData',map);
+    if use_obstacles
+        colormap(flipud(gray));
+        imagesc('XData',[0.05 9.95],'YData',[9.95 0.05],'CData',map);
+    end
     if create_video
         set(gcf,'menubar','none')
         vid = VideoWriter('RRT_example', 'MPEG-4');
