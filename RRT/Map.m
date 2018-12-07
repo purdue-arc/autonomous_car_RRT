@@ -1,4 +1,4 @@
-classdef map
+classdef Map
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -12,7 +12,7 @@ classdef map
     end
     
     methods
-        function obj = map(x_min, x_max, y_min, y_max, scale, simple_map)
+        function obj = Map(x_min, x_max, y_min, y_max, scale, simple_map)
             % Construct an instance of this class
             % Pass in mins and maxes in world units (typ. meters)
             % Pass in scale (ex: 10 results in array where each cell in the array is .1 world units by .1 world units
@@ -34,7 +34,7 @@ classdef map
                     % Copy data to relevant blocks
                     if simple_map(i,j) == 1
                         for k=(1 + r_scale*(i-1)):(r_scale + r_scale*(i-1))
-                            for l=(1 + c_scale(j-1)):(c_scale + c_scale*(j-1))
+                            for l=(1 + c_scale*(j-1)):(c_scale + c_scale*(j-1))
                                 obj.obstacle_array(k,l) = 1;
                             end
                         end
@@ -43,7 +43,7 @@ classdef map
             end
         end
         
-        function valid = check_map_pos(obj, x_pos, y_pos)
+        function valid = check_pos(obj, x_pos, y_pos)
             % Check if an x,y position is a valid position on the map (within bounds & obstacle free)
             
             % Check bounds
@@ -67,7 +67,7 @@ classdef map
                 x_pos = rand(1) * (obj.x_max - obj.x_min) + obj.x_min;
                 y_pos = rand(1) * (obj.y_max - obj.y_min) + obj.y_min;
 
-                if obj.check_map_pos(x_pos, y_pos)
+                if obj.check_pos(x_pos, y_pos)
                     return;
                 end
                 if i == 100

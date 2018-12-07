@@ -1,4 +1,4 @@
-function [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_funct, check_state_funct)
+function [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map)
     num_nodes = size(state_tree, 1);
     
     %%% Constants
@@ -24,7 +24,7 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
     lr = length/2; % Distance from center of gravity to rear wheel
     
     for i = 1:100 % Up to 100 tries before it aborts
-        [rand_pos_x, rand_pos_y] = rand_funct();
+        [rand_pos_x, rand_pos_y] = map.gen_rand_pos();
 
         % This runs through whole tree and finds nearest point
         min_dist = inf;
@@ -52,7 +52,7 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
         %new_state = integrater(state_tree(min_index, :), dt, length, width, mass, rand_velocity, cf, cr, lf, lr, inertia, rand_steering_angle);
         new_state = integraterKinematic(state_tree(min_index, :), dt, length, rand_velocity, rand_steering_angle);
         
-        if check_state_funct(new_state)
+        if map.check_pos(new_state(1), new_state(2))
             % Within bounds, continue
             % Otherwise, try again
             break;
