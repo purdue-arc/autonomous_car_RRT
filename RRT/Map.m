@@ -45,19 +45,8 @@ classdef Map
         
         function valid = check_pos(obj, x_pos, y_pos)
             % Check if an x,y position is a valid position on the map (within bounds & obstacle free)
-            
-            % Check bounds
-            if x_pos > obj.x_min && x_pos < obj.x_max && y_pos > obj.y_min && y_pos < obj.y_max
-                % continue to check for obstacle
-                col = floor(x_pos * obj.scale) + 1;
-                row = obj.y_max*obj.scale - floor(y_pos * obj.scale);
-                cell = obj.obstacle_array(row, col);
-                valid = cell == 0;
-                return;
-            else
-                valid = false;
-                return;
-            end
+            valid = x_pos > obj.x_min && x_pos < obj.x_max && y_pos > obj.y_min && y_pos < obj.y_max && ~obj.get_cell(x_pos, y_pos);
+            return;
         end
         
         function [x_pos,y_pos] = gen_rand_pos(obj)
@@ -76,6 +65,14 @@ classdef Map
                 end
             end
         end
+        
+        function cell = get_cell(obj, x_pos, y_pos)
+            % Returns the value of a cell in world coordinates
+            col = floor(x_pos * obj.scale) + 1;
+            row = obj.y_max * obj.scale - floor(y_pos * obj.scale);
+            cell = obj.obstacle_array(row, col);
+        end
+            
     end
 end
 
