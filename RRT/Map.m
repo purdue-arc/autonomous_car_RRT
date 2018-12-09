@@ -1,6 +1,5 @@
 classdef Map
-    %UNTITLED Summary of this class goes here
-    %   Detailed explanation goes here
+    % This class handles related functions for keeping an array based 2D map of the environment
     
     properties
         obstacle_array
@@ -70,6 +69,13 @@ classdef Map
             % Returns the value of a cell in world coordinates
             col = floor(x_pos * obj.scale) + 1;
             row = obj.y_max * obj.scale - floor(y_pos * obj.scale);
+            cell = obj.obstacle_array(row, col);
+        end
+        
+        function cell = get_cell_internal(obj, x_pos, y_pos)
+            % Returns the value of a cell in internal coordinates
+            col = floor(x_pos) + 1;
+            row = obj.y_max - floor(y_pos);
             cell = obj.obstacle_array(row, col);
         end
             
