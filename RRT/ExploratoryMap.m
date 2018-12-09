@@ -26,6 +26,31 @@ classdef ExploratoryMap < Map
             obj.max_distance = max_distance;
         end
         
+        function knowledge = evaluate_state(obj, state)
+            [points_x, points_y, observation] = obj.simulate_camera(state);
+            knowledge = 0;
+            for i=1:size(points_x)
+                [row, col] = obj.get_rc_internal(points_x(i), points_y(i));
+                current_obs = obj.observation_array(row, col);
+                new_obs = observation(i);
+                if abs(.5 - new_obs) > abs(.5 - current_obs)
+                    knowledge = knowledge + abs(.5 - new_obs) - abs(.5 - current_obs);
+                end
+            end
+        end
+        
+        function execute_state(obj, state)
+            [points_x, points_y, observation] = obj.simulate_camera(state);
+            for i=1:size(points_x)
+                [row, col] = obj.get_rc_internal(points_x(i), points_y(i));
+                current_obs = obj.observation_array(row, col);
+                new_obs = observation(i);
+                if abs(.5 - new_obs) > abs(.5 - current_obs)
+                    obj.observation_array(points_x(i), points_y(i)) = new_obs;
+                end
+            end
+        end          
+        
         function [visible_points_x_internal, visible_points_y_internal, visible_points_observation]  = simulate_camera(obj,state)
             % simCamera This simulates the view of a camera by creating a 2d cone of view based off of n vectors split accross a certain width
             

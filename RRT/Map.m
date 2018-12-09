@@ -67,18 +67,21 @@ classdef Map
         
         function cell = get_cell(obj, x_pos, y_pos)
             % Returns the value of a cell in world coordinates
-            col = floor(x_pos * obj.scale) + 1;
-            row = obj.y_max * obj.scale - floor(y_pos * obj.scale);
+            [row, col] = obj.get_rc_internal(x_pos * obj.scale, y_pos * obj.scale);
             cell = obj.obstacle_array(row, col);
         end
         
         function cell = get_cell_internal(obj, x_pos, y_pos)
             % Returns the value of a cell in internal coordinates
-            col = floor(x_pos) + 1;
-            row = obj.y_max - floor(y_pos);
+            [row, col] = obj.get_rc_internal(x_pos, y_pos);
             cell = obj.obstacle_array(row, col);
         end
-            
+        
+        function [row, col] = get_rc_internal(obj, x_pos, y_pos)
+            % Returns the rc position of a cell in internal coordinates
+            col = round(x_pos) + 1;
+            row = obj.y_max * obj.scale - floor(y_pos);
+        end
     end
 end
 
