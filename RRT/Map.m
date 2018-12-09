@@ -44,7 +44,7 @@ classdef Map
         
         function valid = check_pos(obj, x_pos, y_pos)
             % Check if an x,y position is a valid position on the map (within bounds & obstacle free)
-            valid = x_pos > obj.x_min && x_pos < obj.x_max && y_pos > obj.y_min && y_pos < obj.y_max && ~obj.get_cell(x_pos, y_pos);
+            valid = x_pos >= obj.x_min && x_pos <= obj.x_max && y_pos >= obj.y_min && y_pos <= obj.y_max && ~obj.get_cell(x_pos, y_pos);
             return;
         end
         
@@ -79,7 +79,7 @@ classdef Map
         
         function [row, col] = get_rc_internal(obj, x_pos, y_pos)
             % Returns the rc position of a cell in internal coordinates
-            col = round(x_pos) + 1;
+            col = floor(x_pos) + 1;
             row = obj.y_max * obj.scale - floor(y_pos);
         end
     end
