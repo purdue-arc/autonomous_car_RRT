@@ -78,22 +78,30 @@ classdef ExploratoryMap < Map
                 for d=1:obj.max_distance*obj.scale
                     x = pos_x + d * cos(projection_angle);
                     y = pos_y + d * sin(projection_angle);
-                    [row, col] = obj.get_rc_internal(x, y);
-                    if stop_at_hidden_obstacle && obj.obstacle_array(row, col) == 1 || 
-                        ~stop_at_hidden_obstacle && obj.observation_array(row, col) == 1
-                        % Found an obstacle; terminate the vector
-                        % Distance ends at wall, so round
-                        tails_x(v) = round(x);
-                        tails_y(v) = round(y);
+                    if x_pos >= obj.x_min*obj.scale && x_pos <= obj.x_max*obj.scale && y_pos >= obj.y_min*obj.scale && y_pos <= obj.y_max*obj.scale
+                        [row, col] = obj.get_rc_internal(x, y);
+                        if stop_at_hidden_obstacle && obj.obstacle_array(row, col) == 1 || ...
+                            ~stop_at_hidden_obstacle && obj.observation_array(row, col) == 1
+                            % Found an obstacle; terminate the vector
+                            % Distance ends at wall, so round
+                            tails_x(v) = round(x);
+                            tails_y(v) = round(y);
+                            break;
+                        end
+                        if d == obj.max_distance*obj.scale
+                            % Didn't find a wall, but can no longer see
+                            % Distance should be exact in this case, so don't round
+                            tails_x(v) = x;
+                            tails_y(v) = y;
+                        end
+                        % continue 'raycasting'
+                    else
+                        % Went outside bounds
+                        % Termminate vector at last point rounded
+                        tails_x(v) = round(pos_x + (d-1) * cos(projection_angle));
+                        tails_y(v) = round(pos_y + (d-1) * sin(projection_angle));
                         break;
                     end
-                    if d == obj.max_distance*obj.scale
-                        % Didn't find a wall, but can no longer see
-                        % Distance should be exact in this case, so don't round
-                        tails_x(v) = x;
-                        tails_y(v) = y;
-                    end
-                    % continue 'raycasting'
                 end
             end
 
