@@ -76,24 +76,24 @@ classdef ExploratoryMap < Map
             for v=1:obj.vector_count
                 projection_angle = state(3) + (3-v) * obj.view_width / obj.vector_count; % Get the angle to compute
                 for d=1:obj.max_distance*obj.scale
-                    dist_x = pos_x + d * cos(projection_angle);
+                    x = pos_x + d * cos(projection_angle);
                     y = pos_y + d * sin(projection_angle);
-                    cell = obj.get_cell_internal(dist_x, y);
-                    if stop_at_hidden_obstacle && cell == 1
+                    [row, col] = obj.get_rc_internal(x, y);
+                    if stop_at_hidden_obstacle && obj.obstacle_array(row, col) == 1 || 
+                        ~stop_at_hidden_obstacle && obj.observation_array(row, col) == 1
                         % Found an obstacle; terminate the vector
                         % Distance ends at wall, so round
-                        tails_x(v) = round(dist_x);
+                        tails_x(v) = round(x);
                         tails_y(v) = round(y);
                         break;
                     end
                     if d == obj.max_distance*obj.scale
                         % Didn't find a wall, but can no longer see
                         % Distance should be exact in this case, so don't round
-                        tails_x(v) = dist_x;
+                        tails_x(v) = x;
                         tails_y(v) = y;
-                        break; % Explicit break
                     end
-                    % Otherwise continue 'raycasting'
+                    % continue 'raycasting'
                 end
             end
 
