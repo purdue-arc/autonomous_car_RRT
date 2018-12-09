@@ -14,16 +14,18 @@ classdef ExploratoryMap < Map
         vector_count
         view_width
         max_distance
+        observation_cuttoff
     end
 
     methods
-        function obj = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, vector_count, view_width, max_distance)
+        function obj = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, vector_count, view_width, max_distance, observation_cuttoff)
             % Constructor
             obj = obj@Map(x_min, x_max, y_min, y_max, scale, simple_map);
             obj.observation_array = ones(size(obj.obstacle_array)) * 0.5; % Everything has weight of 0 to start
             obj.vector_count = vector_count;
             obj.view_width = view_width;
             obj.max_distance = max_distance;
+            obj.observation_cutoff = observation_cutoff;
         end
         
         function knowledge = evaluate_state(obj, state)
@@ -52,7 +54,11 @@ classdef ExploratoryMap < Map
                     new_obs = 0.5 * (1 - visibility(i));
                 end
                 if abs(.5 - new_obs) > abs(.5 - current_obs)
-                    obj.observation_array(points_x(i), points_y(i)) = new_obs;
+                    if abs(0.5 - new_obs) < obj.observation_cutoff
+                        obj.observation_array(row, col) = round(new_obs);
+                    else
+                        obj.observation_array(row, col) = new_obs;
+                    end
                 end
             end
         end          
