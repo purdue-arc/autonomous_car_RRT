@@ -18,7 +18,7 @@ classdef ExploratoryMap < Map
     end
 
     methods
-        function obj = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, vector_count, view_width, max_distance, observation_cuttoff)
+        function obj = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, vector_count, view_width, max_distance, observation_cutoff)
             % Constructor
             obj = obj@Map(x_min, x_max, y_min, y_max, scale, simple_map);
             obj.observation_array = ones(size(obj.obstacle_array)) * 0.5; % Everything has weight of 0 to start

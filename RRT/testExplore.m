@@ -14,23 +14,7 @@ simple_map = [0 0 0 0 1;
               0 0 0 1 0;
               0 0 0 0 0];
           
-% This is the "high res" map that we will be using. Will assume 10 meter by
-% 10 meter with resolution of 10 cm
-true_map = zeros(100,100);
-
-% Need to populate the true map with values 
-for i=1:5
-    for j=1:5
-        if simple_map(i,j) == 1
-            % Fill in that block
-            for k=(1+20*(i-1)):(20+20*(i-1))
-                for l=(1+20*(j-1)):(20+20*(j-1))
-                    true_map(k,l) = 1;
-                end
-            end
-        end
-    end
-end
+map = ExploratoryMap(x_min, x_max, y_min, y_max, 10, simple_map);
 
 % Display the map
 colormap(flipud(gray));
