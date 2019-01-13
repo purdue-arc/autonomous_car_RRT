@@ -48,7 +48,7 @@ classdef Map
             return;
         end
         
-        function [x_pos,y_pos] = gen_rand_pos(obj)
+        function [x_pos, y_pos] = gen_rand_pos(obj)
             % Generate a random postion within the bounds and free of obstacles
             
             for i = 1:100 % try up to 100 times

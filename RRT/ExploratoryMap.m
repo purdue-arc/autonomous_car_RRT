@@ -14,7 +14,7 @@ classdef ExploratoryMap < Map
         vector_count
         view_width
         max_distance
-        observation_cuttoff
+        observation_cutoff
     end
 
     methods
@@ -48,12 +48,15 @@ classdef ExploratoryMap < Map
             for i=1:size(points_x)
                 [row, col] = obj.get_rc_internal(points_x(i), points_y(i));
                 current_obs = obj.observation_array(row, col);
+                % Figure out what the new observation is on a scale of 0 to 1
                 if map.get_cell_internal(points_x(i), points_y(i)) == 1
                     new_obs = 0.5 + 0.5 * visibility(i);
                 else
                     new_obs = 0.5 * (1 - visibility(i));
                 end
+                % If the new observation is more accurate . . .
                 if abs(.5 - new_obs) > abs(.5 - current_obs)
+                    % If the observation is accurate enough, round it to 1 or 0
                     if abs(0.5 - new_obs) < obj.observation_cutoff
                         obj.observation_array(row, col) = round(new_obs);
                     else
@@ -64,7 +67,7 @@ classdef ExploratoryMap < Map
         end          
         
         function [visible_x, visible_y, visibility]  = simulate_camera(obj,state, stop_at_hidden_obstacle)
-            % simCamera This simulates the view of a camera by creating a 2d cone of view based off of n vectors split accross a certain width
+            % simCamera This simulates the view of a camera by creating a 2d triangle of view based off of n vectors split accross a certain width
             
             % Location in internal units
             pos_x = state(1) * obj.scale;
@@ -78,7 +81,7 @@ classdef ExploratoryMap < Map
                 for d=1:obj.max_distance*obj.scale
                     x = pos_x + d * cos(projection_angle);
                     y = pos_y + d * sin(projection_angle);
-                    if x_pos >= obj.x_min*obj.scale && x_pos <= obj.x_max*obj.scale && y_pos >= obj.y_min*obj.scale && y_pos <= obj.y_max*obj.scale
+                    if pos_x >= obj.x_min*obj.scale && pos_x <= obj.x_max*obj.scale && pos_y >= obj.y_min*obj.scale && pos_y <= obj.y_max*obj.scale
                         [row, col] = obj.get_rc_internal(x, y);
                         if stop_at_hidden_obstacle && obj.obstacle_array(row, col) == 1 || ...
                             ~stop_at_hidden_obstacle && obj.observation_array(row, col) == 1
@@ -121,14 +124,14 @@ classdef ExploratoryMap < Map
                 triangle_y(v,3) = tails_y(v+1);
             end
 
-            % Determine the set of points that we need to sample
+            % Determine the boundaries of the points that we need to sample
+            % These points form a big box including all points
             min_x = min(trianle_x, [],'all');
             max_x = max(trianle_x, [],'all');
             min_y = min(triangle_y, [],'all');
             max_y = max(triangle_y, [],'all');
 
             % Generate an array of these points to pass into the inpolygon function
-            % Will be a box shape including all internal points + extras
             num_points = (max_x - min_x) * (max_y - min_y);
             box_x = zeros(num_points);
             box_y = zeros(num_points);

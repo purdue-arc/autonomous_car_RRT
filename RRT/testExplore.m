@@ -13,18 +13,33 @@ simple_map = [0 0 0 0 1;
               0 1 1 1 0;
               0 0 0 1 0;
               0 0 0 0 0];
+scale = 10;                 % there should be how many cell-lengths per unit (meter)
+vector_count = 5;           % Number of vectors to cast, increases accuracy, but also calculation time
+view_width = deg2rad(90);   % Field of view of the robot
+max_distance = 10;          % Max distance to consider viewable by robot (linear falloff)
+observation_cutoff = 0.1;   % What is an acceptable difference from 1 or 0 in order to round to one or the other
           
-map = ExploratoryMap(x_min, x_max, y_min, y_max, 10, simple_map);
-
-% Display the map
-colormap(flipud(gray));
-image(true_map,'CDataMapping','scaled');
+map = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, vector_count, view_width, max_distance, observation_cutoff);
 
 state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
 
 state_tree(1,:) = state;
 parents = 0;
 control_tree = [0, 0];
+
+map.execute_state(state);
+
+% Display the map
+    % Figure Position
+    %set(gcf, 'Position', [0 0 1280 720]);
+
+colormap(flipud(gray));
+subplot(1,2,1);
+axis([x_min x_max y_min y_max], 'square');
+imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
+subplot(1,2,2);
+axis([x_min x_max y_min y_max], 'square');
+imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
 
 % for i = 2:5000
 %     % Create a new random position in the map
