@@ -49,7 +49,7 @@ classdef ExploratoryMap < Map
                 [row, col] = obj.get_rc_internal(points_x(i), points_y(i));
                 current_obs = obj.observation_array(row, col);
                 % Figure out what the new observation is on a scale of 0 to 1
-                if map.get_cell_internal(points_x(i), points_y(i)) == 1
+                if obj.get_cell_internal(points_x(i), points_y(i)) == 1
                     new_obs = 0.5 + 0.5 * visibility(i);
                 else
                     new_obs = 0.5 * (1 - visibility(i));
@@ -66,7 +66,7 @@ classdef ExploratoryMap < Map
             end
         end          
         
-        function [visible_x, visible_y, visibility]  = simulate_camera(obj,state, stop_at_hidden_obstacle)
+        function [visible_x, visible_y, visibility]  = simulate_camera(obj, state, stop_at_hidden_obstacle)
             % simCamera This simulates the view of a camera by creating a 2d triangle of view based off of n vectors split accross a certain width
             
             % Location in internal units
@@ -74,60 +74,58 @@ classdef ExploratoryMap < Map
             pos_y = state(2) * obj.scale;
 
             % figure out vectors' tails
-            tails_x = zeros(5);
-            tails_y = zeros(5);
+            vector_end_points = zeros(5,2);   % 5x2 array for storing tail points
             for v=1:obj.vector_count
-                projection_angle = state(3) + (3-v) * obj.view_width / obj.vector_count; % Get the angle to compute
+                % TODO remove hardcoded 3
+                projection_angle = state(3) + (ceil(obj.vector_count/2)-v) * obj.view_width / obj.vector_count; % Get the angle to compute
                 for d=1:obj.max_distance*obj.scale
-                    x = pos_x + d * cos(projection_angle);
-                    y = pos_y + d * sin(projection_angle);
-                    if pos_x >= obj.x_min*obj.scale && pos_x <= obj.x_max*obj.scale && pos_y >= obj.y_min*obj.scale && pos_y <= obj.y_max*obj.scale
+                    % Internal position of end of ray
+                    x = round(pos_x + d * cos(projection_angle));
+                    y = round(pos_y + d * sin(projection_angle));
+                    % Check that [x,y] is within bounds of map
+                    if x >= obj.x_min*obj.scale && x < obj.x_max*obj.scale && y >= obj.y_min*obj.scale && y < obj.y_max*obj.scale
                         [row, col] = obj.get_rc_internal(x, y);
                         if stop_at_hidden_obstacle && obj.obstacle_array(row, col) == 1 || ...
                             ~stop_at_hidden_obstacle && obj.observation_array(row, col) == 1
                             % Found an obstacle; terminate the vector
-                            % Distance ends at wall, so round
-                            tails_x(v) = round(x);
-                            tails_y(v) = round(y);
+                            vector_end_points(v,:) = [x,y];
                             break;
                         end
                         if d == obj.max_distance*obj.scale
                             % Didn't find a wall, but can no longer see
-                            % Distance should be exact in this case, so don't round
-                            tails_x(v) = x;
-                            tails_y(v) = y;
+                            vector_end_points(v,:) = [x,y];
                         end
                         % continue 'raycasting'
                     else
-                        % Went outside bounds
-                        % Termminate vector at last point rounded
-                        tails_x(v) = round(pos_x + (d-1) * cos(projection_angle));
-                        tails_y(v) = round(pos_y + (d-1) * sin(projection_angle));
+                        % Went outside bounds, end at last point
+                        x = round(pos_x + (d-1) * cos(projection_angle));
+                        y = round(pos_y + (d-1) * sin(projection_angle));
+                        vector_end_points(v,:) = [x,y];
                         break;
                     end
                 end
             end
 
             % Create n-1 triangles out of these n vectors plus the starting point
-            trianle_x = zeroes(4,3);
-            triangle_y = zeroes(4,3);
+            triangle_x = zeros(4,3);
+            triangle_y = zeros(4,3);
 
             for v=1:(obj.vector_count-1)
                 % Initial point
-                trianle_x(v,1) = pos_x;
+                triangle_x(v,1) = pos_x;
                 triangle_y(v,1) = pos_y;
                 % Left tail
-                trianle_x(v,2) = tails_x(v);
+                triangle_x(v,2) = tails_x(v);
                 triangle_y(v,2) = tails_y(v);
                 % Right tail
-                trianle_x(v,3) = tails_x(v+1);
+                triangle_x(v,3) = tails_x(v+1);
                 triangle_y(v,3) = tails_y(v+1);
             end
 
             % Determine the boundaries of the points that we need to sample
             % These points form a big box including all points
-            min_x = min(trianle_x, [],'all');
-            max_x = max(trianle_x, [],'all');
+            min_x = min(triangle_x, [],'all');
+            max_x = max(triangle_x, [],'all');
             min_y = min(triangle_y, [],'all');
             max_y = max(triangle_y, [],'all');
 
@@ -150,8 +148,8 @@ classdef ExploratoryMap < Map
 
             % Figure out which of these points are visible (inside the generated triangles)
             visible_points = zeros(num_points);
-            for v=1:obj.num_vectors
-                visible_points = visible_points | inpolygon(box_x, box_y, transpose(trianle_x(v,:)), transpose(triangle_y(v,:)));
+            for v=1:(obj.vector_count-1)
+                visible_points = visible_points | inpolygon(box_x, box_y, transpose(triangle_x(v,:)), transpose(triangle_y(v,:)));
             end
 
             % Generate an array of just the internal points
@@ -168,14 +166,14 @@ classdef ExploratoryMap < Map
             visible_y = box_y(visible_points_index);
 
             % Figure out how well you see these points
-            visibility = zeros(num_visible_points);
+            visibility = zeros(1, num_visible_points);
             for i=1:num_visible_points
                 % Figure out distance
                 dist_x = abs(visible_x(i) - pos_x);
                 dist_y = abs(visible_y(i) - pos_y);
                 dist = sqrt(dist_y^2 + dist_x^2);
                 % Figure out visibility (1 == max, 0 = min)
-                visibility(i) = max([1 - dist / obj.max_dist, 0]);
+                visibility(i) = max([1 - dist / obj.max_distance, 0]);
             end
         end
     end
