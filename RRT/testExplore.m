@@ -14,7 +14,7 @@ simple_map = [0 0 0 0 1;
               0 0 0 1 0;
               0 0 0 0 0];
 scale = 10;                 % there should be how many cell-lengths per unit (meter)
-vector_count = 3;           % Number of vectors to cast, increases accuracy, but also calculation time
+vector_count = 25;           % Number of vectors to cast, increases accuracy, but also calculation time
 view_width = deg2rad(90);   % Field of view of the robot
 max_distance = 10;          % Max distance to consider viewable by robot (linear falloff)
 observation_cutoff = 0.1;   % What is an acceptable difference from 1 or 0 in order to round to one or the other
@@ -38,7 +38,7 @@ subplot(1,2,1);
 axis([x_min x_max y_min y_max], 'square');
 imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
 hold on;
-scatter(visible_points(:,1)/map.scale, visible_points(:,2)/map.scale, round(visible_points(:,3)*75)+25, 'filled');
+scatter(visible_points(:,1)/map.scale, visible_points(:,2)/map.scale, round(visible_points(:,3)*24)+1);
 scatter(state(1), state(2), 'filled');
 subplot(1,2,2);
 axis([x_min x_max y_min y_max], 'square');

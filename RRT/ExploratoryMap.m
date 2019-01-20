@@ -81,7 +81,8 @@ classdef ExploratoryMap < Map
             vector_end_points = zeros(5,2);   % 5x2 array for storing tail points
             for v=1:obj.vector_count
                 % TODO remove hardcoded 3
-                projection_angle = state(3) + (ceil(obj.vector_count/2)-v) * obj.view_width / obj.vector_count; % Get the angle to compute
+                projection_angle = state(3)+obj.view_width/2 - ((v-1) * obj.view_width/(obj.vector_count-1));   % Get the angle to compute
+                %projection_angle = state(3) + (ceil(obj.vector_count/2)-v) * obj.view_width / obj.vector_count; % Get the angle to compute
                 for d=1:obj.max_distance*obj.scale
                     % Internal position of end of ray
                     x = round(pos_x + d * cos(projection_angle));
