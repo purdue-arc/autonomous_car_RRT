@@ -25,8 +25,8 @@ else
     simple_map = [0];
 end
 
-% (x_min, x_max, y_min, y_max, scale, simple_map, vector_count, view_width, max_distance, observation_cutoff)
-map = ExploratoryMap(0, 0, 10, 10, 10, simple_map, 5, pi/2, 10, 0.05);
+% (x_min, x_max, y_min, y_max, scale, simple_map)
+map = Map(0, 10, 0, 10, 10, simple_map);
 
 % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
 state = [0.5, 0.5, pi/4, 0, 0]; 

@@ -10,18 +10,18 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
     steering_angle_range = pi/2;
     max_velocity = 5;
     min_velocity = 1.5;
-    velocity_std_dev = 1;
+%     velocity_std_dev = 1;
     
     % Physical
     length = 0.4;
-    width = 0.2;
-    mass = 4;
-    inertia = 1;
+%     width = 0.2;
+%     mass = 4;
+%     inertia = 1;
     
-    cf = 0.1; % Front cornering stiffness coeff
-    cr = 0.1; % Rear cornering stiffness coeff
-    lf = length/2; % Distance from center of gravity to front wheel
-    lr = length/2; % Distance from center of gravity to rear wheel
+%     cf = 0.1;       % Front cornering stiffness coeff
+%     cr = 0.1;       % Rear cornering stiffness coeff
+%     lf = length/2;  % Distance from center of gravity to front wheel
+%     lr = length/2;  % Distance from center of gravity to rear wheel
     
     for i = 1:100 % Up to 100 tries before it aborts
         [rand_pos_x, rand_pos_y] = map.gen_rand_pos();

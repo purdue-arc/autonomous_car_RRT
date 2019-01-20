@@ -52,14 +52,14 @@ classdef Map < handle
             % Generate a random postion within the bounds and free of obstacles
             
             for i = 1:100 % try up to 100 times
-                x_pos = rand(1) * (obj.x_max - obj.x_min) + obj.x_min;
-                y_pos = rand(1) * (obj.y_max - obj.y_min) + obj.y_min;
+                x_pos = rand * (obj.x_max - obj.x_min) + obj.x_min;
+                y_pos = rand * (obj.y_max - obj.y_min) + obj.y_min;
 
                 if obj.check_pos(x_pos, y_pos)
                     return;
                 end
                 if i == 100
-                    fprintf('Failed to generate random position');
+                    fprintf('Failed to generate random position\n');
                     return;
                 end
             end
@@ -67,8 +67,7 @@ classdef Map < handle
         
         function cell = get_cell(obj, x_pos, y_pos)
             % Returns the value of a cell in world coordinates
-            [row, col] = obj.get_rc_internal(x_pos * obj.scale, y_pos * obj.scale);
-            cell = obj.obstacle_array(row, col);
+            cell = obj.get_cell_internal(x_pos*obj.scale, y_pos*obj.scale);
         end
         
         function cell = get_cell_internal(obj, x_pos, y_pos)

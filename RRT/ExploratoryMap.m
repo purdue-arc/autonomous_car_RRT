@@ -28,12 +28,8 @@ classdef ExploratoryMap < Map
             obj.max_distance = max_distance;
             obj.observation_cutoff = observation_cutoff;
             
-            visible_points = obj.simulate_camera([0, 0, pi/4], false);
-            knowledge = 0;
-            for i=1:size(visible_points, 1)
-                knowledge = knowledge + visible_points(i,3) / obj.scale^2;
-            end
-            obj.max_knowledge = knowledge;
+            visible_points = obj.simulate_camera([0, 0, pi/4], false);  % Generate a camera sim vis from the bottom corner looking diagonally
+            obj.max_knowledge = sum(visible_points(3,:)) / obj.scale^2; % Sum up visibilities then scale to world coordinates
             
         end
         
