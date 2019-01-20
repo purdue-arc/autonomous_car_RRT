@@ -15,6 +15,7 @@ classdef ExploratoryMap < Map
         view_width
         max_distance
         observation_cutoff
+        max_knowledge
     end
 
     methods
@@ -26,9 +27,17 @@ classdef ExploratoryMap < Map
             obj.view_width = view_width;
             obj.max_distance = max_distance;
             obj.observation_cutoff = observation_cutoff;
+            
+            visible_points = obj.simulate_camera([0, 0, pi/4], false);
+            knowledge = 0;
+            for i=1:size(visible_points, 1)
+                knowledge = knowledge + visible_points(i,3) / obj.scale^2;
+            end
+            obj.max_knowledge = knowledge;
+            
         end
         
-        function knowledge = evaluate_state(obj, state)
+        function scaled_knowledge = evaluate_state(obj, state)
             % Evaluate knowledge gained from a certain position with only existing knowledge
             % We don't know that hidden obstacles exist so we 'see' past them when predicting how much we will see
             % Rows for each point, col 1: x, col 2: y, col 3: visibility
@@ -42,9 +51,10 @@ classdef ExploratoryMap < Map
                     knowledge = knowledge + new_vis - current_vis;
                 end
             end
+            scaled_knowledge = knowledge / obj.scale^2 / obj.max_knowledge;
         end
         
-        function visible_points = execute_state(obj, state)
+        function view = execute_state(obj, state)
             % Rows for each point, col 1: x, col 2: y, col 3: visibility
             visible_points = obj.simulate_camera(state, true);
             for i=1:size(visible_points, 1)
@@ -56,18 +66,17 @@ classdef ExploratoryMap < Map
                 else
                     new_obs = 0.5 * (1 - visible_points(i,3));
                 end
-                obj.observation_array(row, col) = new_obs;
-%                 end
-%                 % If the new observation is more accurate . . .
-%                 if abs(.5 - new_obs) > abs(.5 - current_obs)
-%                     % If the observation is accurate enough, round it to 1 or 0
-%                     if abs(0.5 - new_obs) < obj.observation_cutoff
-%                         obj.observation_array(row, col) = round(new_obs);
-%                     else
-%                         obj.observation_array(row, col) = new_obs;
-%                     end
-%                 end
+                % If the new observation is more accurate . . .
+                if abs(.5 - new_obs) > abs(.5 - current_obs)
+                    % If the observation is accurate enough, round it to 1 or 0
+                    if 0.5 - abs(0.5 - new_obs) < obj.observation_cutoff
+                        obj.observation_array(row, col) = round(new_obs);
+                    else
+                        obj.observation_array(row, col) = new_obs;
+                    end
+                end
             end
+            view = visible_points./[obj.scale, obj.scale, 1];
         end          
         
         function visible_points = simulate_camera(obj, state, stop_at_hidden_obstacle)
@@ -82,7 +91,6 @@ classdef ExploratoryMap < Map
             for v=1:obj.vector_count
                 % TODO remove hardcoded 3
                 projection_angle = state(3)+obj.view_width/2 - ((v-1) * obj.view_width/(obj.vector_count-1));   % Get the angle to compute
-                %projection_angle = state(3) + (ceil(obj.vector_count/2)-v) * obj.view_width / obj.vector_count; % Get the angle to compute
                 for d=1:obj.max_distance*obj.scale
                     % Internal position of end of ray
                     x = round(pos_x + d * cos(projection_angle));
