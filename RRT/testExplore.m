@@ -53,12 +53,14 @@ state_tree(1,:) = state;
 parents = 0;
 control_tree = [0, 0];
 
-% for i = 2:500
-%     % Pass this to extend function and add the resulting state to the array
-%     [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map);
-% end
-% 
-% % Find path
-% %goal = [rand(1) * (x_max - x_min - 2*radius) + x_min + radius, rand(1) * (y_max - y_min - 2*radius) + y_min + radius];
+for i = 2:500
+    % Pass this to extend function and add the resulting state to the array
+    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map);
+end
+
+scatter(state_tree(:,1), state_tree(:,2), '*');
+
+% Find path
+%goal = [rand(1) * (x_max - x_min - 2*radius) + x_min + radius, rand(1) * (y_max - y_min - 2*radius) + y_min + radius];
 % goal = [8.3785, 5.7273];
 % [path, length] = evaluateTree(state_tree, parents, goal, radius);
