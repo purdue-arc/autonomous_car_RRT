@@ -13,7 +13,7 @@ simple_map = [0 0 0 0 1;
               0 1 1 1 0;
               0 0 0 1 0;
               0 0 0 0 0];
-scale = 1;                 % there should be how many cell-lengths per unit (meter)
+scale = 2;                 % there should be how many cell-lengths per unit (meter)
 vector_count = 5;           % Number of vectors to cast, increases accuracy, but also calculation time
 view_width = deg2rad(90);   % Field of view of the robot
 max_distance = 10;          % Max distance to consider viewable by robot (linear falloff)

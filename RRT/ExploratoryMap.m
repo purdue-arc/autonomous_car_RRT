@@ -31,12 +31,13 @@ classdef ExploratoryMap < Map
         function knowledge = evaluate_state(obj, state)
             % Evaluate knowledge gained from a certain position with only existing knowledge
             % We don't know that hidden obstacles exist so we 'see' past them when predicting how much we will see
-            [points_x, points_y, visibility] = obj.simulate_camera(state, false);
+            % Rows for each point, col 1: x, col 2: y, col 3: visibility
+            visible_points = obj.simulate_camera(state, false);
             knowledge = 0;
-            for i=1:size(points_x)
-                [row, col] = obj.get_rc_internal(points_x(i), points_y(i));
+            for i=1:size(visible_points, 1)
+                [row, col] = obj.get_rc_internal(visible_points(i,1), visible_points(i,2));
                 current_vis = abs(0.5 - obj.observation_array(row, col)) * 2;
-                new_vis = visibility(i);
+                new_vis = visible_points(i,3);
                 if new_vis > current_vis
                     knowledge = knowledge + new_vis - current_vis;
                 end
@@ -44,15 +45,16 @@ classdef ExploratoryMap < Map
         end
         
         function execute_state(obj, state)
-            [points_x, points_y, visibility] = obj.simulate_camera(state, true);
-            for i=1:size(points_x)
-                [row, col] = obj.get_rc_internal(points_x(i), points_y(i));
+            % Rows for each point, col 1: x, col 2: y, col 3: visibility
+            visible_points = obj.simulate_camera(state, true);
+            for i=1:size(visible_points, 1)
+                [row, col] = obj.get_rc_internal(visible_points(i,1), visible_points(i,2));
                 current_obs = obj.observation_array(row, col);
                 % Figure out what the new observation is on a scale of 0 to 1
-                if obj.get_cell_internal(points_x(i), points_y(i)) == 1
-                    new_obs = 0.5 + 0.5 * visibility(i);
+                if obj.get_cell_internal(visible_points(i,1), visible_points(i,2)) == 1
+                    new_obs = 0.5 + 0.5 * visible_points(i,3);
                 else
-                    new_obs = 0.5 * (1 - visibility(i));
+                    new_obs = 0.5 * (1 - visible_points(i,3));
                 end
                 % If the new observation is more accurate . . .
                 if abs(.5 - new_obs) > abs(.5 - current_obs)
@@ -66,7 +68,7 @@ classdef ExploratoryMap < Map
             end
         end          
         
-        function [visible_x, visible_y, visibility]  = simulate_camera(obj, state, stop_at_hidden_obstacle)
+        function visible_points = simulate_camera(obj, state, stop_at_hidden_obstacle)
             % simCamera This simulates the view of a camera by creating a 2d triangle of view based off of n vectors split accross a certain width
             
             % Location in internal units
@@ -115,65 +117,53 @@ classdef ExploratoryMap < Map
                 triangle_x(v,1) = pos_x;
                 triangle_y(v,1) = pos_y;
                 % Left tail
-                triangle_x(v,2) = tails_x(v);
-                triangle_y(v,2) = tails_y(v);
+                triangle_x(v,2) = vector_end_points(v, 1);
+                triangle_y(v,2) = vector_end_points(v, 2);
                 % Right tail
-                triangle_x(v,3) = tails_x(v+1);
-                triangle_y(v,3) = tails_y(v+1);
+                triangle_x(v,3) = vector_end_points(v+1, 1);
+                triangle_y(v,3) = vector_end_points(v+1, 2);
             end
 
             % Determine the boundaries of the points that we need to sample
             % These points form a big box including all points
-            min_x = min(triangle_x, [],'all');
-            max_x = max(triangle_x, [],'all');
-            min_y = min(triangle_y, [],'all');
-            max_y = max(triangle_y, [],'all');
+            min_x = min(triangle_x, [], 'all');
+            max_x = max(triangle_x, [], 'all');
+            min_y = min(triangle_y, [], 'all');
+            max_y = max(triangle_y, [], 'all');
 
             % Generate an array of these points to pass into the inpolygon function
             num_points = (max_x - min_x) * (max_y - min_y);
-            box_x = zeros(num_points);
-            box_y = zeros(num_points);
+            box_points = zeros(num_points,3);   % col 1: x, col 2: y, col 3: internal
 
-            dist_x = min_x;
+            % Populate this array with points
+            x = min_x;
             y = min_y;
             for i=1:num_points
-                box_x(i) = dist_x;
-                box_y(i) = y;
-                dist_x = dist_x + 1;
-                if dist_x == max_x
-                    dist_x = min_x;
+                box_points(i, 1) = x;
+                box_points(i, 2) = y;
+                x = x + 1;
+                if x == max_x
+                    x = min_x;
                     y = y + 1;
                 end
             end
 
             % Figure out which of these points are visible (inside the generated triangles)
-            visible_points = zeros(num_points);
             for v=1:(obj.vector_count-1)
-                visible_points = visible_points | inpolygon(box_x, box_y, transpose(triangle_x(v,:)), transpose(triangle_y(v,:)));
+                box_points(:,3) = box_points(:,3) | inpolygon(box_points(:,1), box_points(:,2), transpose(triangle_x(v,:)), transpose(triangle_y(v,:)));
             end
 
             % Generate an array of just the internal points
-            num_visible_points = 0;
-            visible_points_index = []; % Index into the box_x and box_y arrays
-            for i=1:num_points
-                if visible_points(i) == 1
-                    num_visible_points = num_visible_points + 1;
-                    visible_points_index(num_visible_points) = i;
-                end
-            end
-
-            visible_x = box_x(visible_points_index);
-            visible_y = box_y(visible_points_index);
+            visible_points = box_points(find(box_points(:,3)), :);  % col 1: x, col 2: y, col 3: vis (currently has 1)
 
             % Figure out how well you see these points
-            visibility = zeros(1, num_visible_points);
-            for i=1:num_visible_points
+            for i=1:size(visible_points, 1)
                 % Figure out distance
-                dist_x = abs(visible_x(i) - pos_x);
-                dist_y = abs(visible_y(i) - pos_y);
+                dist_x = abs(visible_points(i, 1) - pos_x);
+                dist_y = abs(visible_points(i, 2) - pos_y);
                 dist = sqrt(dist_y^2 + dist_x^2);
                 % Figure out visibility (1 == max, 0 = min)
-                visibility(i) = max([1 - dist / obj.max_distance, 0]);
+                visible_points(i, 3) = max([1 - dist / obj.max_distance, 0]);
             end
         end
     end
