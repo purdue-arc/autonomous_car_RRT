@@ -27,27 +27,8 @@ state_tree(1,:) = state;
 parents = 0;
 control_tree = [0, 0];
 
-knowledge = map.evaluate_state(state)
-
+knowledge = map.evaluate_state(state);
 view = map.execute_state(state);
-
-
-% Display the map
-    % Figure Position
-    %set(gcf, 'Position', [0 0 1280 720]);
-
-colormap(flipud(gray));
-subplot(1,2,1);
-axis([x_min x_max y_min y_max], 'square');
-imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
-hold on;
-scatter(view(:,1), view(:,2), round(view(:,3)*24)+1);
-scatter(state(1), state(2), 'filled');
-subplot(1,2,2);
-axis([x_min x_max y_min y_max], 'square');
-imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
-hold on;
-scatter(state(1), state(2), 'filled');
 
 state_tree(1,:) = state;
 parents = 0;
@@ -57,6 +38,42 @@ for i = 2:500
     % Pass this to extend function and add the resulting state to the array
     [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map);
 end
+
+
+% Display the map
+    % Figure Position
+    %set(gcf, 'Position', [0 0 1280 720]);
+
+colormap(flipud(gray));
+subplot(1,2,1);                                             % Left plot
+hold on;
+axis([x_min x_max y_min y_max], 'square');                  % Set axis
+                                                            % Plot image
+imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
+scatter(view(:,1), view(:,2), round(view(:,3)*24)+1);       % Visibility
+scatter(state(1), state(2), 'filled');                      % Car
+
+subplot(1,2,2);                                             % Right plot
+hold on;
+axis([x_min x_max y_min y_max], 'square');                  % Set axis
+                                                            % Plot image
+imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
+%scatter(state(1), state(2), 'filled');                      % Car
+
+plot_array = [];
+    for i = 1:size(state_tree, 1)
+        curr_state = state_tree(i,:);
+        new_point = plot(curr_state(1), curr_state(2), '*');
+        plot_array(i,1) = new_point; % Add
+        % If it has a parent, plot a line
+        if parents(i) ~= 0
+            curr_parent = state_tree(parents(i),:);
+            new_line = line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'blue', 'LineStyle',':');
+            plot_array(i,2) = new_line;
+        end
+    end
+
+
 
 scatter(state_tree(:,1), state_tree(:,2), '*');
 
