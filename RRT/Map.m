@@ -1,4 +1,4 @@
-classdef Map
+classdef Map < handle
     % This class handles related functions for keeping an array based 2D map of the environment
     
     properties

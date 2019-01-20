@@ -44,7 +44,7 @@ classdef ExploratoryMap < Map
             end
         end
         
-        function execute_state(obj, state)
+        function visible_points = execute_state(obj, state)
             % Rows for each point, col 1: x, col 2: y, col 3: visibility
             visible_points = obj.simulate_camera(state, true);
             for i=1:size(visible_points, 1)
@@ -56,15 +56,17 @@ classdef ExploratoryMap < Map
                 else
                     new_obs = 0.5 * (1 - visible_points(i,3));
                 end
-                % If the new observation is more accurate . . .
-                if abs(.5 - new_obs) > abs(.5 - current_obs)
-                    % If the observation is accurate enough, round it to 1 or 0
-                    if abs(0.5 - new_obs) < obj.observation_cutoff
-                        obj.observation_array(row, col) = round(new_obs);
-                    else
-                        obj.observation_array(row, col) = new_obs;
-                    end
-                end
+                obj.observation_array(row, col) = new_obs;
+%                 end
+%                 % If the new observation is more accurate . . .
+%                 if abs(.5 - new_obs) > abs(.5 - current_obs)
+%                     % If the observation is accurate enough, round it to 1 or 0
+%                     if abs(0.5 - new_obs) < obj.observation_cutoff
+%                         obj.observation_array(row, col) = round(new_obs);
+%                     else
+%                         obj.observation_array(row, col) = new_obs;
+%                     end
+%                 end
             end
         end          
         
@@ -163,7 +165,7 @@ classdef ExploratoryMap < Map
                 dist_y = abs(visible_points(i, 2) - pos_y);
                 dist = sqrt(dist_y^2 + dist_x^2);
                 % Figure out visibility (1 == max, 0 = min)
-                visible_points(i, 3) = max([1 - dist / obj.max_distance, 0]);
+                visible_points(i, 3) = max([1 - dist / (obj.max_distance * obj.scale), 0]);
             end
         end
     end
