@@ -53,29 +53,34 @@ imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2)
 scatter(view(:,1), view(:,2), round(view(:,3)*24)+1);       % Visibility
 scatter(state(1), state(2), 'filled');                      % Car
 
-subplot(1,2,2);                                             % Right plot
+ax = subplot(1,2,2);                                        % Right plot
 hold on;
 axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                             % Plot image
 imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
-%scatter(state(1), state(2), 'filled');                      % Car
-
-plot_array = [];
-    for i = 1:size(state_tree, 1)
-        curr_state = state_tree(i,:);
-        new_point = plot(curr_state(1), curr_state(2), '*');
-        plot_array(i,1) = new_point; % Add
-        % If it has a parent, plot a line
-        if parents(i) ~= 0
-            curr_parent = state_tree(parents(i),:);
-            new_line = line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'blue', 'LineStyle',':');
-            plot_array(i,2) = new_line;
-        end
-    end
+ax.ColorOrderIndex = 2;                                     % Get some nice orange
+scatter(state(1), state(2), 100, 'filled');                 % Car
+ax.ColorOrderIndex = 4;                                     % Get some nice purple
+plot_array = plot(state_tree(:,1), state_tree(:,2), '*');   % Plot the nodes
 
 
 
-scatter(state_tree(:,1), state_tree(:,2), '*');
+% plot_array = [];
+%     for i = 1:size(state_tree, 1)
+%         curr_state = state_tree(i,:);
+%         new_point = plot(curr_state(1), curr_state(2), '*');
+%         plot_array(i,1) = new_point; % Add
+%         % If it has a parent, plot a line
+%         if parents(i) ~= 0
+%             curr_parent = state_tree(parents(i),:);
+%             new_line = line([curr_state(1), curr_parent(1)], [curr_state(2), curr_parent(2)], 'Color', 'blue', 'LineStyle',':');
+%             plot_array(i,2) = new_line;
+%         end
+%     end
+
+
+
+%scatter(state_tree(:,1), state_tree(:,2), '*');
 
 % Find path
 %goal = [rand(1) * (x_max - x_min - 2*radius) + x_min + radius, rand(1) * (y_max - y_min - 2*radius) + y_min + radius];
