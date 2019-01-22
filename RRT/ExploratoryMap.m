@@ -11,25 +11,27 @@ classdef ExploratoryMap < Map
         %  y_max
         %  scale
         observation_array
-        vector_count
+        evaluation_vector_count
+        execution_vector_count
         view_width
         max_distance
-        observation_cutoff
+        obstacle_cuttoff
         max_knowledge
     end
 
     methods
-        function obj = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, vector_count, view_width, max_distance, observation_cutoff)
+        function obj = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_vector_count, execution_vector_count, view_width, max_distance, obstacle_cutoff)
             % Constructor
             obj = obj@Map(x_min, x_max, y_min, y_max, scale, simple_map);
             obj.observation_array = ones(size(obj.obstacle_array)) * 0.5; % Everything has weight of 0 to start
-            obj.vector_count = vector_count;
+            obj.evaluation_vector_count = evaluation_vector_count;
+            obj.execution_vector_count = execution_vector_count;
             obj.view_width = view_width;
             obj.max_distance = max_distance;
-            obj.observation_cutoff = observation_cutoff;
+            obj.obstacle_cuttoff = obstacle_cutoff;
             
             visible_points = obj.simulate_camera([0, 0, pi/4], false);  % Generate a camera sim vis from the bottom corner looking diagonally
-            obj.max_knowledge = sum(visible_points(3,:)) / obj.scale^2; % Sum up visibilities then scale to world coordinates
+            obj.max_knowledge = sum(visible_points(:,3)) / obj.scale^2; % Sum up visibilities then scale to world coordinates
             
         end
         
@@ -64,9 +66,9 @@ classdef ExploratoryMap < Map
                 end
                 % If the new observation is more accurate . . .
                 if abs(.5 - new_obs) > abs(.5 - current_obs)
-                    % If the observation is accurate enough, round it to 1 or 0
-                    if 0.5 - abs(0.5 - new_obs) < obj.observation_cutoff
-                        obj.observation_array(row, col) = round(new_obs);
+                    % If the observation is accurate enough, round it to 1
+                    if new_obs > obj.obstacle_cuttoff
+                        obj.observation_array(row, col) = 1;
                     else
                         obj.observation_array(row, col) = new_obs;
                     end
@@ -75,18 +77,24 @@ classdef ExploratoryMap < Map
             view = visible_points./[obj.scale, obj.scale, 1];
         end          
         
-        function visible_points = simulate_camera(obj, state, stop_at_hidden_obstacle)
+        function visible_points = simulate_camera(obj, state, execution)
             % simCamera This simulates the view of a camera by creating a 2d triangle of view based off of n vectors split accross a certain width
             
+            if execution
+                vector_count = obj.execution_vector_count;
+            else
+                vector_count = obj.evaluation_vector_count;
+            end
+            
             % Location in internal units
-            pos_x = state(1) * obj.scale;
-            pos_y = state(2) * obj.scale;
+            pos_x = round(state(1) * obj.scale);
+            pos_y = round(state(2) * obj.scale);
 
             % figure out vectors' tails
             vector_end_points = zeros(5,2);   % 5x2 array for storing tail points
-            for v=1:obj.vector_count
+            for v=1:vector_count
                 % TODO remove hardcoded 3
-                projection_angle = state(3)+obj.view_width/2 - ((v-1) * obj.view_width/(obj.vector_count-1));   % Get the angle to compute
+                projection_angle = state(3)+obj.view_width/2 - ((v-1) * obj.view_width/(vector_count-1));   % Get the angle to compute
                 for d=1:obj.max_distance*obj.scale
                     % Internal position of end of ray
                     x = round(pos_x + d * cos(projection_angle));
@@ -94,8 +102,7 @@ classdef ExploratoryMap < Map
                     % Check that [x,y] is within bounds of map
                     if x >= obj.x_min*obj.scale && x < obj.x_max*obj.scale && y >= obj.y_min*obj.scale && y < obj.y_max*obj.scale
                         [row, col] = obj.get_rc_internal(x, y);
-                        if stop_at_hidden_obstacle && obj.obstacle_array(row, col) == 1 || ...
-                            ~stop_at_hidden_obstacle && obj.observation_array(row, col) == 1
+                        if execution && obj.obstacle_array(row, col) == 1 || obj.observation_array(row, col) == 1
                             % Found an obstacle; terminate the vector
                             vector_end_points(v,:) = [x,y];
                             break;
@@ -119,7 +126,7 @@ classdef ExploratoryMap < Map
             triangle_x = zeros(4,3);
             triangle_y = zeros(4,3);
 
-            for v=1:(obj.vector_count-1)
+            for v=1:(vector_count-1)
                 % Initial point
                 triangle_x(v,1) = pos_x;
                 triangle_y(v,1) = pos_y;
@@ -140,7 +147,7 @@ classdef ExploratoryMap < Map
 
             % Generate an array of these points to pass into the inpolygon function
             num_points = (max_x - min_x) * (max_y - min_y);
-            box_points = zeros(num_points,3);   % col 1: x, col 2: y, col 3: internal
+            box_points = zeros(num_points, 3);  % col 1: x, col 2: y, col 3: internal
 
             % Populate this array with points
             x = min_x;
@@ -149,14 +156,14 @@ classdef ExploratoryMap < Map
                 box_points(i, 1) = x;
                 box_points(i, 2) = y;
                 x = x + 1;
-                if x == max_x
+                if x >= max_x
                     x = min_x;
                     y = y + 1;
                 end
             end
 
             % Figure out which of these points are visible (inside the generated triangles)
-            for v=1:(obj.vector_count-1)
+            for v=1:(vector_count-1)
                 box_points(:,3) = box_points(:,3) | inpolygon(box_points(:,1), box_points(:,2), transpose(triangle_x(v,:)), transpose(triangle_y(v,:)));
             end
 

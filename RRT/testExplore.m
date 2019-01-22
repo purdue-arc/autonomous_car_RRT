@@ -14,18 +14,17 @@ simple_map = [0 0 0 0 1;
               0 0 0 1 0;
               0 0 0 0 0];
 scale = 10;                 % there should be how many cell-lengths per unit (meter)
-vector_count = 45;          % Number of vectors to cast, increases accuracy, but also calculation time
+execution_vector_count = 45;% Number of vectors to cast when executing a postion, increases accuracy, but also calculation time
+evaluation_vector_count = 5;% Number of vectors to cast when evaluation a position. higher increases accuracy, but also evaluation time.
 view_width = deg2rad(90);   % Field of view of the robot
 max_distance = 10;          % Max distance to consider viewable by robot (linear falloff)
-observation_cutoff = 0.0;   % What is an acceptable difference from 1 or 0 in order to round to one or the other
+obstacle_cutoff = 0.75;     % At what point do you assume something is an obstacle
+
+num_nodes_per_step = 500;   % How many nodes to generate per step
           
-map = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, vector_count, view_width, max_distance, observation_cutoff);
+map = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_vector_count, execution_vector_count, view_width, max_distance, obstacle_cutoff);
 
 state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
-
-state_tree(1,:) = state;
-parents = 0;
-control_tree = [0, 0];
 
 knowledge = map.evaluate_state(state);
 view = map.execute_state(state);
@@ -34,9 +33,14 @@ state_tree(1,:) = state;
 parents = 0;
 control_tree = [0, 0];
 
-for i = 2:500
+for i = 2:num_nodes_per_step
     % Pass this to extend function and add the resulting state to the array
     [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map);
+end
+
+knowledgeArray = zeros(num_nodes_per_step, 1);
+for i = 2:num_nodes_per_step
+    knowledgeArray(i) = map.evaluate_state(state_tree(i,:));
 end
 
 
