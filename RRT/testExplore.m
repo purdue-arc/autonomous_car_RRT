@@ -19,8 +19,9 @@ evaluation_vector_count = 5;% Number of vectors to cast when evaluation a positi
 view_width = deg2rad(90);   % Field of view of the robot
 max_distance = 10;          % Max distance to consider viewable by robot (linear falloff)
 obstacle_cutoff = 0.75;     % At what point do you assume something is an obstacle
+cost_per_step = 0.1;
 
-num_nodes_per_step = 500;   % How many nodes to generate per step
+num_nodes_per_step = 50;   % How many nodes to generate per step
           
 map = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_vector_count, execution_vector_count, view_width, max_distance, obstacle_cutoff);
 
@@ -38,9 +39,18 @@ for i = 2:num_nodes_per_step
     [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map);
 end
 
-knowledgeArray = zeros(num_nodes_per_step, 1);
-for i = 2:num_nodes_per_step
-    knowledgeArray(i) = map.evaluate_state(state_tree(i,:));
+value_tree = zeros(num_nodes_per_step, 2);  % Col 1: current value, col 2: num children
+for i = num_nodes_per_step:-1:2 % Work backwards through tree
+    % Update self
+    knowledge = map.evaluate_state(state_tree(i,1:3));  % Knowledge of own pos
+    value = value_tree(i,1) + knowledge;                % Value of self = self knowledge + knowlege of children - cost of children
+    value_tree(i,1) = value;
+    
+    % Update parent
+    num_children = value_tree(i,2) + 1;                 % children of parent = self + 1
+    parent_index = parents(i);
+    delta_parent_value = value - cost_per_step * num_children;  % value from self to add to parent
+    value_tree(parent_index,:) = value_tree(parent_index,:) + [delta_parent_value, num_children];
 end
 
 
