@@ -19,9 +19,8 @@ evaluation_vector_count = 5;% Number of vectors to cast when evaluation a positi
 view_width = deg2rad(90);   % Field of view of the robot
 max_distance = 10;          % Max distance to consider viewable by robot (linear falloff)
 obstacle_cutoff = 0.75;     % At what point do you assume something is an obstacle
-cost_per_step = 0.1;
 
-num_nodes_per_step = 50;   % How many nodes to generate per step
+num_nodes = 250;   % How many nodes to generate per step
           
 map = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_vector_count, execution_vector_count, view_width, max_distance, obstacle_cutoff);
 
@@ -34,25 +33,44 @@ state_tree(1,:) = state;
 parents = 0;
 control_tree = [0, 0];
 
-for i = 2:num_nodes_per_step
+% Perform RRT
+for i = 2:num_nodes
     % Pass this to extend function and add the resulting state to the array
     [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map);
 end
 
-value_tree = zeros(num_nodes_per_step, 2);  % Col 1: current value, col 2: num children
-for i = num_nodes_per_step:-1:2 % Work backwards through tree
-    % Update self
-    knowledge = map.evaluate_state(state_tree(i,1:3));  % Knowledge of own pos
-    value = value_tree(i,1) + knowledge;                % Value of self = self knowledge + knowlege of children - cost of children
-    value_tree(i,1) = value;
-    
-    % Update parent
-    num_children = value_tree(i,2) + 1;                 % children of parent = self + 1
-    parent_index = parents(i);
-    delta_parent_value = value - cost_per_step * num_children;  % value from self to add to parent
-    value_tree(parent_index,:) = value_tree(parent_index,:) + [delta_parent_value, num_children];
+% Compute estimated knowledge
+knowledge_tree = zeros(num_nodes-1, 1);  % Knowledge estimate per node
+for i = 2:num_nodes
+    knowledge_tree(i) = map.evaluate_state(state_tree(i,1:3));
 end
 
+% Determine mean knowledge and compute cost per step
+
+
+% Compute values for each node
+cost_utility_tree = zeros(num_nodes, 4);  % Col 1: knowledge, col 2: children, col 3: knowledge sum, col 4: children sum
+for i = num_nodes:-1:2 % Work backwards through tree
+    % Update self
+    knowledge = map.evaluate_state(state_tree(i,1:3));
+    cost_utility_tree(i,:) = cost_utility_tree(i,:) + [knowledge, 0, knowledge, 0];
+    
+    % Update parent
+    num_children = cost_utility_tree(i,2) + 1;                 % children of parent = self + 1
+    parent_index = parents(i);
+    cost_utility_tree(parent_index,:) = cost_utility_tree(parent_index,:) + [0, num_children, cost_utility_tree(i,3), num_children + cost_utility_tree(i,4)];
+end
+
+avg_cost_per_step = cost_utility_tree(1,3) / cost_utility_tree(1,4);
+
+value_tree = cost_utility_tree(:,3) - avg_cost_per_step * cost_utility_tree(:,4);
+
+possible_states = find(parents == 1);
+
+[next_state_value, next_state_index] = max(value_tree(possible_states));
+
+next_state = state_tree(possible_states(next_state_index), :);
+next_control = control_tree(possible_states(next_state_index), :);
 
 % Display the map
     % Figure Position
@@ -75,7 +93,8 @@ imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2)
 ax.ColorOrderIndex = 2;                                     % Get some nice orange
 scatter(state(1), state(2), 100, 'filled');                 % Car
 ax.ColorOrderIndex = 4;                                     % Get some nice purple
-point_array = plot(state_tree(:,1), state_tree(:,2), '*');   % Plot the nodes
+point_array = plot(state_tree(:,1), state_tree(:,2), '*');  % Plot the nodes
+scatter(next_state(1), next_state(2), 'filled');                      % Next State
 
 % lets make some lines
 x_points = [state_tree(2:end, 1), state_tree(parents(2:end), 1)]';
