@@ -51,13 +51,16 @@ for i = 2:num_steps
     cur_view =  map.execute_state(next_state);
     
     % Update the graphs
+    set(gcf, 'Position', [0 0 1280 720]);
+    clf;                                                        % Clear old stuff (since it can hang slightly off screen)
     colormap(flipud(gray));
-    subplot(1,2,1);                                             % Left plot
+    ax = subplot(1,2,1);                                        % Left plot
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
     imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
-    scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*24)+1);       % Visibility
+    ax.ColorOrderIndex = 1;                                     % Make vis blue for consistency
+    scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*9)+1);       % Visibility
     scatter(next_state(1), next_state(2), 'filled');              % Car
 
     ax = subplot(1,2,2);                                        % Right plot
@@ -65,8 +68,11 @@ for i = 2:num_steps
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
     imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
+    plot(state_tree(1:i,1), state_tree(1:i,2), 'b*:');          % Plot the path taken
     ax.ColorOrderIndex = 2;                                     % Get some nice orange
-    scatter(next_state(1), next_state(2), 100, 'filled');       % Car    
+    scatter(next_state(1), next_state(2), 100, 'filled');       % Car
+    
+    drawnow;
 end
 
 % Display the map
