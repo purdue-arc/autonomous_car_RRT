@@ -7,6 +7,7 @@ x_max = 10;
 y_min = 0;
 y_max = 10;
 radius = 0.25;
+num_nodes = 5000;
 
 % Plot / video export values
 use_obstacles = true;
@@ -29,15 +30,19 @@ end
 map = Map(0, 10, 0, 10, 10, simple_map);
 
 % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
-state = [0.5, 0.5, pi/4, 0, 0]; 
+cur_state = [0.5, 0.5, pi/4, 0, 0]; 
 
-state_tree(1,:) = state;
-parents = 0;
-control_tree = [0, 0];
+% Create RRT arrays
+state_tree = zeros(num_nodes, 5);   % State at each node
+parents = zeros(num_nodes, 1);      % Parent of each node (index into state_tree)
+control_tree = zeros(num_nodes, 2); % Control to get to each node from parent
 
-for i = 2:5000
+% Populate RRT arrays with initial data
+state_tree(1,:) = cur_state;
+    
+for i = 2:num_nodes
     % Pass this to extend function and add the resulting state to the array
-    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map);
+    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, i);
 end
 
 % Find path

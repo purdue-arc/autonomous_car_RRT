@@ -13,14 +13,13 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
     length = 0.4;
     
     for attempt = 1:num_attempts % Up to num_attempts tries before it aborts
-        
         % Generate random pos
         [rand_pos_x, rand_pos_y] = map.gen_rand_pos();
 
         % Find nearest point
         min_dist = inf;
         nearest_node_index = -1;
-        for node = 1:cur_node   % Only search tree up to where it is populated
+        for node = 1:cur_node-1   % Only search tree up to where it is populated
             curr_state = state_tree(node, :);
             curr_pos_x = curr_state(1);
             curr_pos_y = curr_state(2);
@@ -46,12 +45,11 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
         end
         if attempt == num_attempts
             % Failed
-            fprintf('Failed to generate state in bounds for point at index %d\n', cur_node+1);
+            fprintf('Failed to generate state in bounds for point at index %d\n', cur_node);
         end
     end
     
     % Add new state to tree
-    cur_node = cur_node + 1;
     state_tree(cur_node,:) = new_state;
     parents(cur_node) = nearest_node_index;
     control_tree(cur_node,:) = [rand_steering_angle, rand_velocity];
