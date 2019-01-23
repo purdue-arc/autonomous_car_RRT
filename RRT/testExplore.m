@@ -6,6 +6,7 @@ x_min = 0;
 x_max = 10;
 y_min = 0;
 y_max = 10;
+num_steps = 10;    % When to stop exploring (in future use while loop?)
 
 % Values for exploration
 simple_map = [0 0 0 0 1;
@@ -19,77 +20,83 @@ evaluation_vector_count = 5;% Number of vectors to cast when evaluation a positi
 view_width = deg2rad(90);   % Field of view of the robot
 max_distance = 10;          % Max distance to consider viewable by robot (linear falloff)
 obstacle_cutoff = 0.75;     % At what point do you assume something is an obstacle
-
 num_nodes = 250;   % How many nodes to generate per step
           
 map = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_vector_count, execution_vector_count, view_width, max_distance, obstacle_cutoff);
 
-state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
+cur_state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
 
-view = map.execute_state(state);
+% Create exploration arrays
+state_tree = zeros(num_steps, 5);   % State at each node
+control_tree = zeros(num_steps, 2); % Control to get to each node from parent
+value_tree = zeros(num_steps, 1);   % The value of each move (prediction)
+% Note that no parent array is needed since each node is child of previous
 
-state_tree(1,:) = state;
-parents = 0;
-control_tree = [0, 0];
+% Populate exploration arrays
+state_tree(1,:) = cur_state;
+cur_view = map.execute_state(cur_state);
 
-% Perform RRT
-for i = 2:num_nodes
-    % Pass this to extend function and add the resulting state to the array
-    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map);
-end
-
-% Compute values for each node
-cost_utility_tree = zeros(num_nodes, 4);  % Col 1: knowledge, col 2: children, col 3: knowledge sum, col 4: children sum
-for i = num_nodes:-1:2 % Work backwards through tree
-    % Update self
-    knowledge = map.evaluate_state(state_tree(i,1:3));
-    cost_utility_tree(i,:) = cost_utility_tree(i,:) + [knowledge, 0, knowledge, 0];
+% Perform exploration
+for i = 2:num_steps
+    % Choose next path
+    cur_state = state_tree(i-1,:);
+    [next_state, next_control, next_value] = explore(map, cur_state, num_nodes);
     
-    % Update parent
-    num_children = cost_utility_tree(i,2) + 1;                 % children of parent = self + 1
-    parent_index = parents(i);
-    cost_utility_tree(parent_index,:) = cost_utility_tree(parent_index,:) + [0, num_children, cost_utility_tree(i,3), num_children + cost_utility_tree(i,4)];
+    % Update arrays
+    state_tree(i,:) = next_state;
+    control_tree(i,:) = next_control;
+    value_tree(i) = next_value;
+    
+    % Perform the movement
+    cur_view =  map.execute_state(next_state);
+    
+    % Update the graphs
+    colormap(flipud(gray));
+    subplot(1,2,1);                                             % Left plot
+    hold on;
+    axis([x_min x_max y_min y_max], 'square');                  % Set axis
+                                                                % Plot image
+    imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
+    scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*24)+1);       % Visibility
+    scatter(next_state(1), next_state(2), 'filled');              % Car
+
+    ax = subplot(1,2,2);                                        % Right plot
+    hold on;
+    axis([x_min x_max y_min y_max], 'square');                  % Set axis
+                                                                % Plot image
+    imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
+    ax.ColorOrderIndex = 2;                                     % Get some nice orange
+    scatter(next_state(1), next_state(2), 100, 'filled');       % Car    
 end
-
-avg_cost_per_step = cost_utility_tree(1,3) / cost_utility_tree(1,4);
-
-value_tree = cost_utility_tree(:,3) - avg_cost_per_step * cost_utility_tree(:,4);
-
-possible_states = find(parents == 1);
-
-[next_state_value, next_state_index] = max(value_tree(possible_states));
-
-next_state = state_tree(possible_states(next_state_index), :);
-next_control = control_tree(possible_states(next_state_index), :);
 
 % Display the map
     % Figure Position
     %set(gcf, 'Position', [0 0 1280 720]);
 
-colormap(flipud(gray));
-subplot(1,2,1);                                             % Left plot
-hold on;
-axis([x_min x_max y_min y_max], 'square');                  % Set axis
-                                                            % Plot image
-imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
-scatter(view(:,1), view(:,2), round(view(:,3)*24)+1);       % Visibility
-scatter(state(1), state(2), 'filled');                      % Car
-
-ax = subplot(1,2,2);                                        % Right plot
-hold on;
-axis([x_min x_max y_min y_max], 'square');                  % Set axis
-                                                            % Plot image
-imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
-ax.ColorOrderIndex = 2;                                     % Get some nice orange
-scatter(state(1), state(2), 100, 'filled');                 % Car
-ax.ColorOrderIndex = 4;                                     % Get some nice purple
-point_array = plot(state_tree(:,1), state_tree(:,2), '*');  % Plot the nodes
-scatter(next_state(1), next_state(2), 'filled');                      % Next State
-
-% lets make some lines
-x_points = [state_tree(2:end, 1), state_tree(parents(2:end), 1)]';
-y_points = [state_tree(2:end, 2), state_tree(parents(2:end), 2)]';
-line_array = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
+% colormap(flipud(gray));
+% subplot(1,2,1);                                             % Left plot
+% hold on;
+% axis([x_min x_max y_min y_max], 'square');                  % Set axis
+%                                                             % Plot image
+% imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
+% scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*24)+1);       % Visibility
+% scatter(cur_state(1), cur_state(2), 'filled');              % Car
+% 
+% ax = subplot(1,2,2);                                        % Right plot
+% hold on;
+% axis([x_min x_max y_min y_max], 'square');                  % Set axis
+%                                                             % Plot image
+% imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
+% ax.ColorOrderIndex = 2;                                     % Get some nice orange
+% scatter(cur_state(1), cur_state(2), 100, 'filled');         % Car
+% ax.ColorOrderIndex = 4;                                     % Get some nice purple
+% point_array = plot(state_tree(:,1), state_tree(:,2), '*');  % Plot the nodes
+% scatter(next_state(1), next_state(2), 'filled');            % Next State
+% 
+% % lets make some lines
+% x_points = [state_tree(2:end, 1), state_tree(parents(2:end), 1)]';
+% y_points = [state_tree(2:end, 2), state_tree(parents(2:end), 2)]';
+% line_array = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
 
 % Find path
 %goal = [rand(1) * (x_max - x_min - 2*radius) + x_min + radius, rand(1) * (y_max - y_min - 2*radius) + y_min + radius];

@@ -1,4 +1,4 @@
-function [next_state, next_control, next_state_value] = explore(map, cur_state, num_nodes)
+function [next_state, next_control, next_value] = explore(map, cur_state, num_nodes)
 
     % Create RRT arrays
     state_tree = zeros(num_nodes, 5);   % State at each node
@@ -11,7 +11,7 @@ function [next_state, next_control, next_state_value] = explore(map, cur_state, 
     % Perform RRT
     for i = 2:num_nodes
         % Pass this to extend function and add the resulting state to the array
-        [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map);
+        [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, i);
     end
 
     % Create knowledge and cost array
@@ -41,7 +41,7 @@ function [next_state, next_control, next_state_value] = explore(map, cur_state, 
     possible_states = find(parents == 1);
 
     % Determine the value and index of the next state with the max value
-    [next_state_value, next_state_index] = max(value_tree(possible_states));
+    [next_value, next_state_index] = max(value_tree(possible_states));
 
     % Determine the state and required control
     next_state = state_tree(possible_states(next_state_index), :);
