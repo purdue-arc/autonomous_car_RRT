@@ -26,7 +26,6 @@ map = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_v
 
 state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
 
-knowledge = map.evaluate_state(state);
 view = map.execute_state(state);
 
 state_tree(1,:) = state;
@@ -38,15 +37,6 @@ for i = 2:num_nodes
     % Pass this to extend function and add the resulting state to the array
     [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map);
 end
-
-% Compute estimated knowledge
-knowledge_tree = zeros(num_nodes-1, 1);  % Knowledge estimate per node
-for i = 2:num_nodes
-    knowledge_tree(i) = map.evaluate_state(state_tree(i,1:3));
-end
-
-% Determine mean knowledge and compute cost per step
-
 
 % Compute values for each node
 cost_utility_tree = zeros(num_nodes, 4);  % Col 1: knowledge, col 2: children, col 3: knowledge sum, col 4: children sum
