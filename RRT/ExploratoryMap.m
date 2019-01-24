@@ -16,7 +16,7 @@ classdef ExploratoryMap < Map
         view_width
         max_distance
         obstacle_cuttoff
-        max_knowledge
+%         max_knowledge
     end
 
     methods
@@ -30,12 +30,12 @@ classdef ExploratoryMap < Map
             obj.max_distance = max_distance;
             obj.obstacle_cuttoff = obstacle_cutoff;
             
-            visible_points = obj.simulate_camera([0, 0, pi/4], false);  % Generate a camera sim vis from the bottom corner looking diagonally
-            obj.max_knowledge = sum(visible_points(:,3)) / obj.scale^2; % Sum up visibilities then scale to world coordinates
+%             visible_points = obj.simulate_camera([0, 0, pi/4], false);  % Generate a camera sim vis from the bottom corner looking diagonally
+%             obj.max_knowledge = sum(visible_points(:,3)) / obj.scale^2; % Sum up visibilities then scale to world coordinates
             
         end
         
-        function scaled_knowledge = evaluate_state(obj, state)
+        function knowledge = evaluate_state(obj, state)
             % Evaluate knowledge gained from a certain position with only existing knowledge
             % We don't know that hidden obstacles exist so we 'see' past them when predicting how much we will see
             % Rows for each point, col 1: x, col 2: y, col 3: visibility
@@ -49,7 +49,7 @@ classdef ExploratoryMap < Map
                     knowledge = knowledge + new_vis - current_vis;
                 end
             end
-            scaled_knowledge = knowledge / obj.scale^2 / obj.max_knowledge;
+%             scaled_knowledge = knowledge / obj.scale^2 / obj.max_knowledge;
         end
         
         function view = execute_state(obj, state)
