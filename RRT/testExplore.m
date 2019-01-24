@@ -64,7 +64,7 @@ drawnow;
 if create_video
     set(gcf,'menubar','none')
     vid = VideoWriter('Exploration_example', 'MPEG-4');
-    vid.FrameRate = 12;
+    vid.FrameRate = 6;
     open(vid);
     frame = getframe(gcf);
     writeVideo(vid, frame);
@@ -74,7 +74,7 @@ end
 for i = 2:num_steps
     % Choose next path
     cur_state = state_tree(i-1,:);
-    [next_state, next_control, next_value] = explore(map, cur_state, num_nodes);
+    [next_state, next_control, next_value, rrt_tree] = explore(map, cur_state, num_nodes);
     
     % Update arrays
     state_tree(i,:) = next_state;

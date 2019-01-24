@@ -45,7 +45,10 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
         end
         if attempt == num_attempts
             % Failed
-            fprintf('Failed to generate state in bounds for point at index %d\n', cur_node);
+            fprintf('Failed to generate state in bounds for point at index %d, duplicating parent\n', cur_node);
+            new_state = state_tree(nearest_node_index, :);
+            rand_steering_angle = 0;
+            rand_velocity = 0;
         end
     end
     

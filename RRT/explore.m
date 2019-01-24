@@ -1,4 +1,4 @@
-function [next_state, next_control, next_value] = explore(map, cur_state, num_nodes)
+function [next_state, next_control, next_value, state_tree] = explore(map, cur_state, num_nodes)
 
     % Create RRT arrays
     state_tree = zeros(num_nodes, 5);   % State at each node
