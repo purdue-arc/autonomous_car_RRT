@@ -15,27 +15,32 @@ function [next_state, next_control, next_value, state_tree] = explore(map, cur_s
     end
 
     % Create knowledge and cost array
-    utility_tree = zeros(num_nodes, 2); % Col 1: self knowledge, col 2: knowledge of self + children
-    cost_tree = zeros(num_nodes, 2);    % Col 1:  Number of children, col 2: Cost of children (number of total steps)
+    knowledge_tree = zeros(num_nodes, 2); % Col 1: self knowledge, col 2: knowledge of self + children
+    distance_tree = zeros(num_nodes, 2);    % Col 1:  distance from parent, col 2: Distance of self + children
 
     % Compute knowledge and cost
     for i = num_nodes:-1:2 % Work backwards through tree
-        % Update self
+        parent_index = parents(i);
+        % Calc knowledge and distance values
         knowledge = map.evaluate_state(state_tree(i,:));
-        utility_tree(i,:) = utility_tree(i,:) + [knowledge, knowledge];
+        x_dist = (state_tree(i,1) - state_tree(parent_index,1);
+        y_dist = (state_tree(i,2) - state_tree(parent_index,2);
+        distance = sqrt(x_dist^2+y_dist^2);
+        
+        % Update self
+        knowledge_tree(i,:) = knowledge_tree(i,:) + [knowledge, knowledge];
+        distance_tree(i,:) = distance_tree(i,:) + [distance, distance];
 
         % Update parent
-        num_children = cost_tree(i,1) + 1;  % children of parent = self + 1
-        parent_index = parents(i);
-        utility_tree(parent_index,2) = utility_tree(parent_index,2) + utility_tree(i,2);  % Add self + children knowledge to parent
-        cost_tree(parent_index,:) = cost_tree(parent_index,:) + [num_children, cost_tree(i,2) + num_children];  % Add children and children cost
+        knowledge_tree(parent_index,2) = knowledge_tree(parent_index,2) + knowledge_tree(i,2);              % Add self + children knowledge to parent
+        distance_tree(parent_index,2) = distance_tree(parent_index,2) + [distance + distance_tree(i,2)];    % Add self + children distance to parent
     end
 
-    % Determine mean knowledge per step
-    avg_knowledge_per_step = utility_tree(1,2) / cost_tree(1,2);
+    % Determine distance weight
+    distance_weight = knowledge_tree(1,2) / distance_tree(1,2);
 
     % Determine value of each node
-    value_tree = utility_tree(:,2) - avg_knowledge_per_step * cost_tree(:,2);
+    value_tree = knowledge_tree(:,2) + distance_weight * distance_tree(:,2);
 
     % Determine the indices of the possible next states
     possible_states = find(parents == 1);
