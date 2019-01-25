@@ -1,4 +1,4 @@
-function [next_state, next_control, next_value, state_tree] = explore(map, cur_state, num_nodes)
+function [next_state, next_control, next_value, state_tree, parents] = explore(map, cur_state, num_nodes)
 
     % Create RRT arrays
     state_tree = zeros(num_nodes, 5);   % State at each node
@@ -23,8 +23,8 @@ function [next_state, next_control, next_value, state_tree] = explore(map, cur_s
         parent_index = parents(i);
         % Calc knowledge and distance values
         knowledge = map.evaluate_state(state_tree(i,:));
-        x_dist = (state_tree(i,1) - state_tree(parent_index,1);
-        y_dist = (state_tree(i,2) - state_tree(parent_index,2);
+        x_dist = (state_tree(i,1) - state_tree(parent_index,1));
+        y_dist = (state_tree(i,2) - state_tree(parent_index,2));
         distance = sqrt(x_dist^2+y_dist^2);
         
         % Update self

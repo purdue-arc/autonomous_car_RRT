@@ -84,7 +84,7 @@ end
 for i = 2:num_steps
     % Choose next path
     cur_state = state_tree(i-1,:);
-    [next_state, next_control, next_value, rrt_tree] = explore(map, cur_state, num_nodes);
+    [next_state, next_control, next_value, rrt_tree, rrt_parents] = explore(map, cur_state, num_nodes);
     
     % Update arrays
     state_tree(i,:) = next_state;
@@ -113,6 +113,13 @@ for i = 2:num_steps
                                                                 % Plot image
     imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
     plot(state_tree(1:i,1), state_tree(1:i,2), 'b*:');          % Plot the path taken
+    % Plot the RRT tree for debug / kicks
+    ax.ColorOrderIndex = 4;                                     % Get some nice purple
+    point_array = plot(rrt_tree(:,1), rrt_tree(:,2), '*');      % Plot the nodes
+    % Plot the lines
+    x_points = [rrt_tree(2:end, 1), rrt_tree(rrt_parents(2:end), 1)]';
+    y_points = [rrt_tree(2:end, 2), rrt_tree(rrt_parents(2:end), 2)]';
+    line_array = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
     % Car
 %     ax = axis(fig);
 %     x_range = (ax(2)-ax(1))*(x_max-x_min);
@@ -123,7 +130,8 @@ for i = 2:num_steps
 %     arrow_y_max = (next_state(2)+sin(next_state(3)))/y_range + ax(3);   % Y end
 %     annotation('arrow', [arrow_x_min, arrow_x_max], [arrow_y_min, arrow_y_max]);
     ax.ColorOrderIndex = 2;                                     % Get some nice orange
-    scatter(next_state(1), next_state(2), 100, 'filled');       % Car
+    scatter(cur_state(1), cur_state(2), 100, 'filled');          % Car (current)
+    scatter(next_state(1), next_state(2), 75, 'filled');         % Car (future)
     
     drawnow;
     
