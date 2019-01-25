@@ -89,7 +89,7 @@ classdef ExploratoryMap < Map
             pos_y = round(state(2) * obj.scale);
 
             % figure out vectors' tails
-            vector_end_points = zeros(5,2);   % 5x2 array for storing tail points
+            vector_end_points = zeros(vector_count,2);   % vector_countx2 array for storing tail points
             for v=1:vector_count
                 projection_angle = state(3)+obj.view_width/2 - ((v-1) * obj.view_width/(vector_count-1));   % Get the angle to compute
                 for d=1:obj.max_distance*obj.scale
@@ -99,7 +99,7 @@ classdef ExploratoryMap < Map
                     % Check that [x,y] is within bounds of map
                     if x >= obj.x_min*obj.scale && x < obj.x_max*obj.scale && y >= obj.y_min*obj.scale && y < obj.y_max*obj.scale
                         [row, col] = obj.get_rc_internal(x, y);
-                        if execution && obj.obstacle_array(row, col) == 1 || obj.observation_array(row, col) == 1
+                        if execution && obj.obstacle_array(row, col) == 1 || (~execution && obj.observation_array(row, col) == 1)
                             % Found an obstacle; terminate the vector
                             vector_end_points(v,:) = [x,y];
                             break;
@@ -120,8 +120,8 @@ classdef ExploratoryMap < Map
             end
 
             % Create n-1 triangles out of these n vectors plus the starting point
-            triangle_x = zeros(4,3);
-            triangle_y = zeros(4,3);
+            triangle_x = zeros(vector_count-1,3);
+            triangle_y = zeros(vector_count-1,3);
 
             for v=1:(vector_count-1)
                 % Initial point
