@@ -39,9 +39,29 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
         new_state = integraterKinematic(state_tree(nearest_node_index, :), dt, length, rand_velocity, rand_steering_angle);
         
         if (execution && map.check_pos(new_state(1), new_state(2))) || (~execution && map.check_pos_explore(new_state(1), new_state(2)))
-            % Within bounds, continue
-            % Otherwise, try again
-            break;
+            success = true;
+            % Within bounds and not on an obstacle point
+            % Need to check every point along the line too
+            parent_x = state_tree(nearest_node_index,1);
+            parent_y = state_tree(nearest_node_index,2);
+            dist = sqrt((parent_x - new_state(1))^2 + (parent_y - new_state(2))^2);
+            for d=1:dist*map.scale
+                % Internal position of end of line going from parent to child
+                x = round(parent_x + d * cos(new_state(3)));
+                y = round(parent_y + d * sin(new_state(3)));
+                if execution && ~map.check_pos(x/map.scale, y/map.scale) || (~execution && ~map.check_pos_explore(x/map.scale, y/map.scale))
+                    % Found an obstacle
+                    % Set flag
+                    success = false;
+                    % No need to continue
+                    break;
+                end
+            end
+            if success
+                % No obstacles found, break out of the loop and use this control and state
+                break;
+            end
+            % Otherwise keep going and try new controls
         end
         if attempt == num_attempts
             % Failed
