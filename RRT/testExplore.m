@@ -42,22 +42,32 @@ cur_view = map.execute_state(cur_state);
 set(gcf, 'Position', [0 0 1280 720]);
 clf;                                                        % Clear old stuff (since it can hang slightly off screen)
 colormap(flipud(gray));
-ax = subplot(1,2,1);                                        % Left plot
+fig = subplot(1,2,1);                                        % Left plot
 hold on;
 axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                             % Plot image
 imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
-ax.ColorOrderIndex = 1;                                     % Make vis blue for consistency
+fig.ColorOrderIndex = 1;                                     % Make vis blue for consistency
 scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*9)+1);       % Visibility
 scatter(cur_state(1), cur_state(2), 'filled');              % Car
 
-ax = subplot(1,2,2);                                        % Right plot
+fig = subplot(1,2,2);                                        % Right plot
 hold on;
 axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                             % Plot image
 imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
+
+% Car
+% ax = axis(fig);
+% x_range = (ax(2)-ax(1))*(x_max-x_min);
+% y_range = (ax(4)-ax(3))*(y_max-y_min);
+% arrow_x_min = (cur_state(1)-cos(cur_state(3)))/x_range + ax(1);   % X init
+% arrow_x_max = (cur_state(1)+cos(cur_state(3)))/x_range + ax(1);   % X end
+% arrow_y_min = (cur_state(2)-sin(cur_state(3)))/y_range + ax(3);   % Y init
+% arrow_y_max = (cur_state(2)+sin(cur_state(3)))/y_range + ax(3);   % Y end
+% annotation('arrow', [arrow_x_min, arrow_x_max], [arrow_y_min, arrow_y_max]);
 ax.ColorOrderIndex = 2;                                     % Get some nice orange
-scatter(cur_state(1), cur_state(2), 100, 'filled');       % Car
+scatter(cur_state(1), cur_state(2), 100, 'filled');         % Car
 
 drawnow;
 
@@ -88,21 +98,30 @@ for i = 2:num_steps
 %     set(gcf, 'Position', [0 0 1280 720]);
     clf;                                                        % Clear old stuff (since it can hang slightly off screen)
 %     colormap(flipud(gray));
-    ax = subplot(1,2,1);                                        % Left plot
+    fig = subplot(1,2,1);                                        % Left plot
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
     imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
-    ax.ColorOrderIndex = 1;                                     % Make vis blue for consistency
+    fig.ColorOrderIndex = 1;                                     % Make vis blue for consistency
     scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*9)+1);       % Visibility
     scatter(next_state(1), next_state(2), 'filled');              % Car
 
-    ax = subplot(1,2,2);                                        % Right plot
+    fig = subplot(1,2,2);                                        % Right plot
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
     imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
     plot(state_tree(1:i,1), state_tree(1:i,2), 'b*:');          % Plot the path taken
+    % Car
+%     ax = axis(fig);
+%     x_range = (ax(2)-ax(1))*(x_max-x_min);
+%     y_range = (ax(4)-ax(3))*(x_max-x_min);
+%     arrow_x_min = (next_state(1)-cos(next_state(3)))/x_range + ax(1);   % X init
+%     arrow_x_max = (next_state(1)+cos(next_state(3)))/x_range + ax(1);   % X end
+%     arrow_y_min = (next_state(2)-sin(next_state(3)))/y_range + ax(3);   % Y init
+%     arrow_y_max = (next_state(2)+sin(next_state(3)))/y_range + ax(3);   % Y end
+%     annotation('arrow', [arrow_x_min, arrow_x_max], [arrow_y_min, arrow_y_max]);
     ax.ColorOrderIndex = 2;                                     % Get some nice orange
     scatter(next_state(1), next_state(2), 100, 'filled');       % Car
     
@@ -121,6 +140,7 @@ end
 if create_video
     close(vid);
 end
+
 
 % Display the map
     % Figure Position
