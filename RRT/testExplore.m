@@ -40,36 +40,7 @@ cur_view = map.execute_state(cur_state);
 
 % Initial plot
 set(gcf, 'Position', [0 0 1280 720]);
-clf;                                                        % Clear old stuff (since it can hang slightly off screen)
 colormap(flipud(gray));
-fig = subplot(1,2,1);                                        % Left plot
-hold on;
-axis([x_min x_max y_min y_max], 'square');                  % Set axis
-                                                            % Plot image
-imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
-fig.ColorOrderIndex = 1;                                     % Make vis blue for consistency
-scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*9)+1);       % Visibility
-scatter(cur_state(1), cur_state(2), 'filled');              % Car
-
-fig = subplot(1,2,2);                                        % Right plot
-hold on;
-axis([x_min x_max y_min y_max], 'square');                  % Set axis
-                                                            % Plot image
-imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
-
-% Car
-% ax = axis(fig);
-% x_range = (ax(2)-ax(1))*(x_max-x_min);
-% y_range = (ax(4)-ax(3))*(y_max-y_min);
-% arrow_x_min = (cur_state(1)-cos(cur_state(3)))/x_range + ax(1);   % X init
-% arrow_x_max = (cur_state(1)+cos(cur_state(3)))/x_range + ax(1);   % X end
-% arrow_y_min = (cur_state(2)-sin(cur_state(3)))/y_range + ax(3);   % Y init
-% arrow_y_max = (cur_state(2)+sin(cur_state(3)))/y_range + ax(3);   % Y end
-% annotation('arrow', [arrow_x_min, arrow_x_max], [arrow_y_min, arrow_y_max]);
-ax.ColorOrderIndex = 2;                                     % Get some nice orange
-scatter(cur_state(1), cur_state(2), 100, 'filled');         % Car
-
-drawnow;
 
 if create_video
     set(gcf,'menubar','none')
@@ -81,45 +52,46 @@ if create_video
 end
 
 % Perform exploration
-for i = 2:num_steps
-    % Choose next path
+for i = 2:num_steps+1
+    % Perform last movement
     cur_state = state_tree(i-1,:);
-    [next_state, next_control, next_value, rrt_tree, rrt_parents] = explore(map, cur_state, num_nodes);
-    
-    % Update arrays
-    state_tree(i,:) = next_state;
-    control_tree(i,:) = next_control;
-    value_tree(i) = next_value;
-    
-    % Perform the movement
-    cur_view =  map.execute_state(next_state);
+    cur_view =  map.execute_state(cur_state);
     
     % Update the graphs
-%     set(gcf, 'Position', [0 0 1280 720]);
     clf;                                                        % Clear old stuff (since it can hang slightly off screen)
-%     colormap(flipud(gray));
-    fig = subplot(1,2,1);                                        % Left plot
+    fig = subplot(1,2,1);                                       % Left plot
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
     imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
-    fig.ColorOrderIndex = 1;                                     % Make vis blue for consistency
+    fig.ColorOrderIndex = 1;                                    % Make vis blue for consistency
     scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*9)+1);       % Visibility
-    scatter(next_state(1), next_state(2), 'filled');              % Car
-
-    fig = subplot(1,2,2);                                        % Right plot
+    scatter(cur_state(1), cur_state(2), 'filled');              % Car
+    
+    fig = subplot(1,2,2);                                       % Right plot
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
     imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
-    plot(state_tree(1:i,1), state_tree(1:i,2), 'b*:');          % Plot the path taken
-    % Plot the RRT tree for debug / kicks
-    ax.ColorOrderIndex = 4;                                     % Get some nice purple
-    point_array = plot(rrt_tree(:,1), rrt_tree(:,2), '*');      % Plot the nodes
-    % Plot the lines
-    x_points = [rrt_tree(2:end, 1), rrt_tree(rrt_parents(2:end), 1)]';
-    y_points = [rrt_tree(2:end, 2), rrt_tree(rrt_parents(2:end), 2)]';
-    line_array = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
+    plot(state_tree(1:i-1,1), state_tree(1:i-1,2), 'b*:');      % Plot the path taken
+    
+    if i <= num_steps
+        % Choose next path
+        [next_state, next_control, next_value, rrt_tree, rrt_parents] = explore(map, cur_state, num_nodes);
+
+        % Update arrays
+        state_tree(i,:) = next_state;
+        control_tree(i,:) = next_control;
+        value_tree(i) = next_value;
+    
+        % Plot the RRT tree for debug
+        ax.ColorOrderIndex = 4;                                     % Get some nice purple
+        point_array = plot(rrt_tree(:,1), rrt_tree(:,2), '*');      % Plot the nodes
+        % Plot the lines
+        x_points = [rrt_tree(2:end, 1), rrt_tree(rrt_parents(2:end), 1)]';
+        y_points = [rrt_tree(2:end, 2), rrt_tree(rrt_parents(2:end), 2)]';
+        line_array = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
+    end
     % Car
 %     ax = axis(fig);
 %     x_range = (ax(2)-ax(1))*(x_max-x_min);
@@ -131,10 +103,8 @@ for i = 2:num_steps
 %     annotation('arrow', [arrow_x_min, arrow_x_max], [arrow_y_min, arrow_y_max]);
     ax.ColorOrderIndex = 2;                                     % Get some nice orange
     scatter(cur_state(1), cur_state(2), 100, 'filled');          % Car (current)
-    scatter(next_state(1), next_state(2), 75, 'filled');         % Car (future)
-    
+%     scatter(next_state(1), next_state(2), 75, 'filled');         % Car (future)
     drawnow;
-    
     if create_video
         frame = getframe(gcf);
         writeVideo(vid, frame);
