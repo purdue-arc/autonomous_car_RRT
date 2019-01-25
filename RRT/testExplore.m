@@ -39,7 +39,7 @@ state_tree(1,:) = cur_state;
 cur_view = map.execute_state(cur_state);
 
 % Initial plot
-set(gcf, 'Position', [0 0 1280 720]);
+set(gcf, 'Position', [300 200 1280 720]);
 colormap(flipud(gray));
 
 if create_video
@@ -57,21 +57,21 @@ for i = 2:num_steps+1
     
     % Update the graphs
     clf;                                                        % Clear old stuff (since it can hang slightly off screen)
-    fig = subplot(1,2,1);                                       % Left plot
+    ax = subplot(1,2,1);                                        % Left plot
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
     imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
-    fig.ColorOrderIndex = 1;                                    % Make vis blue for consistency
+    ax.ColorOrderIndex = 1;                                     % Make vis blue for consistency
     scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*9)+1);       % Visibility
     scatter(cur_state(1), cur_state(2), 'filled');              % Car
     
-    fig = subplot(1,2,2);                                       % Right plot
+    ax = subplot(1,2,2);                                        % Right plot
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
     imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
-    plot(state_tree(1:i-1,1), state_tree(1:i-1,2), 'm*:');      % Plot the path taken
+    plot(state_tree(1:i-1,1), state_tree(1:i-1,2), 'r*:');      % Plot the path taken
     
     if i <= num_steps
         % Choose next path
@@ -90,22 +90,13 @@ for i = 2:num_steps+1
         y_points = [rrt_tree(2:end, 2), rrt_tree(rrt_parents(2:end), 2)]';
         line_array = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
     end
-    % Car
-    x_range = (ax.Position(2)-ax.Position(1))*(x_max-x_min);
-    y_range = (ax.Position(4)-ax.Position(3))*(x_max-x_min);
-    arrow_x_min = (next_state(1)-cos(next_state(3)))/x_range + ax.Position(1);   % X init
-    arrow_x_max = (next_state(1)+cos(next_state(3)))/x_range + ax.Position(1);   % X end
-    arrow_y_min = (next_state(2)-sin(next_state(3)))/y_range + ax.Position(3);   % Y init
-    arrow_y_max = (next_state(2)+sin(next_state(3)))/y_range + ax.Position(3);   % Y end
-    annotation('arrow', [arrow_x_min, arrow_x_max], [arrow_y_min, arrow_y_max]);
-%     ax.ColorOrderIndex = 2;                                     % Get some nice orange
-%     scatter(cur_state(1), cur_state(2), 100, 'filled');          % Car (current)
-%     scatter(next_state(1), next_state(2), 75, 'filled');         % Car (future)
+
+    ax.ColorOrderIndex = 2;                                     % Get some nice orange
+    scatter(cur_state(1), cur_state(2), 'filled');              % Car
     drawnow;
     if create_video
         frame = getframe(gcf);
         writeVideo(vid, frame);
-        fprintf('wrote');
         if mod(i,10) == 0
             fprintf('progress: %d / %d\n', i, num_steps);
         end
