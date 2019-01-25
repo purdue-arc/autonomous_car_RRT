@@ -42,10 +42,10 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
             success = true;
             % Within bounds and not on an obstacle point
             % Need to check every point along the line too
-            parent_x = state_tree(nearest_node_index,1);
-            parent_y = state_tree(nearest_node_index,2);
-            dist = sqrt((parent_x - new_state(1))^2 + (parent_y - new_state(2))^2);
-            for d=1:dist*map.scale
+            parent_x = state_tree(nearest_node_index,1) * map.scale;
+            parent_y = state_tree(nearest_node_index,2) * map.scale;
+            dist = sqrt((parent_x - new_state(1)*map.scale)^2 + (parent_y - new_state(2)*map.scale)^2) * map.scale;
+            for d=1:dist
                 % Internal position of end of line going from parent to child
                 x = round(parent_x + d * cos(new_state(3)));
                 y = round(parent_y + d * sin(new_state(3)));
