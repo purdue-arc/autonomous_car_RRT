@@ -11,7 +11,7 @@ function [next_state, next_control, next_value, state_tree, parents] = explore(m
     % Perform RRT
     for i = 2:num_nodes
         % Pass this to extend function and add the resulting state to the array
-        [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, i);
+        [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, i, false);
     end
 
     % Create knowledge and cost array

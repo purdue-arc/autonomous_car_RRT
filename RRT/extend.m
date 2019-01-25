@@ -1,4 +1,4 @@
-function [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, cur_node)
+function [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, cur_node, execution)
     %%% Constants
     % Simulation
     dt = 0.1;
@@ -38,7 +38,7 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
         % Come up with new state
         new_state = integraterKinematic(state_tree(nearest_node_index, :), dt, length, rand_velocity, rand_steering_angle);
         
-        if map.check_pos(new_state(1), new_state(2))
+        if (execution && map.check_pos(new_state(1), new_state(2))) || (~execution && map.check_pos_explore(new_state(1), new_state(2)))
             % Within bounds, continue
             % Otherwise, try again
             break;

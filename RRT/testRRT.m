@@ -42,7 +42,7 @@ state_tree(1,:) = cur_state;
     
 for i = 2:num_nodes
     % Pass this to extend function and add the resulting state to the array
-    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, i);
+    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, i, true);
 end
 
 % Find path

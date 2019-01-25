@@ -180,6 +180,12 @@ classdef ExploratoryMap < Map
                 visible_points(i, 3) = max([1 - dist / (obj.max_distance * obj.scale), 0]);
             end
         end
+        function valid = check_pos_explore(obj, x_pos, y_pos)
+            % Check if an x,y position is a valid position on the map (within bounds and free on observed map)
+            [row, col] = obj.get_rc_internal(x_pos*obj.scale, y_pos*obj.scale);
+            valid = x_pos >= obj.x_min && x_pos < obj.x_max && y_pos >= obj.y_min && y_pos < obj.y_max && obj.observation_array(row, col) ~= 1;
+            return;
+        end
     end
 end
 
