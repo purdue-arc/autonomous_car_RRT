@@ -11,11 +11,22 @@ num_steps = 120;    % When to stop exploring (in future use while loop?)
 create_video = true;
 
 % Values for exploration
-simple_map = [0 0 0 0 1;
-              0 0 1 0 0;
-              0 1 1 1 0;
-              0 0 0 1 0;
-              0 0 0 0 0];
+% simple_map = [0 0 0 0 1;
+%               0 0 1 0 0;
+%               0 1 1 1 0;
+%               0 0 0 1 0;
+%               0 0 0 0 0];
+simple_map =  [ 1 0 0 0 0 0 1 1 1 1;
+                1 0 0 0 0 0 1 0 1 1;
+                1 0 0 1 0 0 1 0 0 1;
+                0 0 0 1 0 0 0 0 0 1;
+                0 0 1 1 1 0 0 0 0 0;
+                0 0 0 0 1 0 0 0 0 0;
+                0 0 0 0 0 0 0 1 0 0;
+                1 0 0 0 0 0 0 1 0 0;
+                0 0 0 0 0 0 0 0 0 1;
+                0 0 0 1 0 0 0 0 0 1];
+
 scale = 10;                 % there should be how many cell-lengths per unit (meter)
 execution_vector_count = 90;% Number of vectors to cast when executing a postion, increases accuracy, but also calculation time
 evaluation_vector_count = 5;% Number of vectors to cast when evaluation a position. higher increases accuracy, but also evaluation time.
