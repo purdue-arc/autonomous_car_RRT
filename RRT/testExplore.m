@@ -33,7 +33,7 @@ evaluation_vector_count = 5;% Number of vectors to cast when evaluation a positi
 view_width = deg2rad(90);   % Field of view of the robot
 max_distance = 10;          % Max distance to consider viewable by robot (linear falloff)
 obstacle_cutoff = 0.75;     % At what point do you assume something is an obstacle
-num_nodes = 250;   % How many nodes to generate per step
+num_nodes = 250;            % How many nodes to generate per step
           
 map = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_vector_count, execution_vector_count, view_width, max_distance, obstacle_cutoff);
 
@@ -72,7 +72,7 @@ for i = 2:num_steps+1
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
-    imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
+    imagesc('XData', [x_min + 0.5/map.scale,  x_max - 0.5/map.scale], 'YData', [x_max - 0.5/map.scale,  x_min + 0.5/map.scale], 'CData', map.obstacle_array);
     ax.ColorOrderIndex = 1;                                     % Make vis blue for consistency
     scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*9)+1);       % Visibility
     scatter(cur_state(1), cur_state(2), 'filled');              % Car
@@ -81,7 +81,7 @@ for i = 2:num_steps+1
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
-    imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
+    imagesc('XData', [x_min + 0.5/map.scale,  x_max - 0.5/map.scale], 'YData', [x_max - 0.5/map.scale,  x_min + 0.5/map.scale], 'CData', map.observation_array);
     plot(state_tree(1:i-1,1), state_tree(1:i-1,2), 'r*:');      % Plot the path taken
     
     if i <= num_steps
