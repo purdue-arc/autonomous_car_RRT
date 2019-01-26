@@ -31,7 +31,7 @@ classdef ExploratoryMap < Map
             obj.obstacle_cuttoff = obstacle_cutoff;
             
             % Used to determine the exploration progress
-            obj.free_space = sum(~obj.obstacle_array, [], 'all');           
+            obj.free_space = sum(~obj.obstacle_array, 'all');           
         end
         
         function knowledge = evaluate_state(obj, state)
@@ -88,10 +88,11 @@ classdef ExploratoryMap < Map
             pos_y = state(2) * obj.scale;
 
             % figure out vectors' tails
-            vector_end_points = zeros(vector_count,2);   % vector_count x 2 array for storing tail points
+            vector_end_points = zeros(vector_count, 2);   % vector_count x 2 array for storing tail points
             for v=1:vector_count
                 projection_angle = state(3)+obj.view_width/2 - ((v-1)*obj.view_width/(vector_count-1));   % Get the angle to compute
-                vector_end_points(v,:) = obj.raycast(pos_x, pos_y, projection_angle, execution);
+                [x_end, y_end] = obj.raycast(pos_x, pos_y, projection_angle, execution);
+                vector_end_points(v,:) = [x_end, y_end];
             end
 
             % Create n-1 triangles out of these n vectors plus the starting point
@@ -118,7 +119,7 @@ classdef ExploratoryMap < Map
             max_y = max(triangle_y, [], 'all');
 
             % Generate an array of these points to pass into the inpolygon function
-            num_points = (max_x - min_x) * (max_y - min_y);
+            num_points = ceil((max_x - min_x) * (max_y - min_y));
             box_points = zeros(num_points, 3);  % col 1: x, col 2: y, col 3: internal
 
             % Populate this array with points
@@ -158,7 +159,7 @@ classdef ExploratoryMap < Map
             % Operates using internal units
             
             % Step through each point along the ray, using the internal scale so we don't miss any cells
-            for d=1:obj.max_dist * obj.scale
+            for d=1:obj.max_distance * obj.scale
                 % Internal position of end of ray
                 x = pos_x + d * cos(projection_angle);
                 y = pos_y + d * sin(projection_angle);
@@ -174,7 +175,7 @@ classdef ExploratoryMap < Map
                         y_end = y;
                         break;
                     end
-
+                    
                     % Check if we hit the max distance
                     if d == obj.max_distance * obj.scale
                         % Didn't find a wall, but can no longer see
@@ -208,7 +209,7 @@ classdef ExploratoryMap < Map
         
         function progress = get_exploration_progress(obj)
             % Determine what percentage of the obstacle free map has been explored
-            observation = sum(~obj.obstacle_array .* (0.5 - obj.observation_array) * 2, [], 'all');
+            observation = sum(~obj.obstacle_array .* (0.5 - obj.observation_array) * 2, 'all');
             progress = observation / obj.free_space;
         end
     end
