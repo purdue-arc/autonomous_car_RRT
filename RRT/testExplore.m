@@ -16,6 +16,7 @@ create_video = true;
 %               0 1 1 1 0;
 %               0 0 0 1 0;
 %               0 0 0 0 0];
+
 simple_map =  [ 1 0 0 0 0 0 1 1 1 1;
                 1 0 0 0 0 0 1 0 1 1;
                 1 0 0 1 0 0 1 0 0 1;
@@ -117,38 +118,3 @@ end
 if create_video
     close(vid);
 end
-
-
-% Display the map
-    % Figure Position
-    %set(gcf, 'Position', [0 0 1280 720]);
-
-% colormap(flipud(gray));
-% subplot(1,2,1);                                             % Left plot
-% hold on;
-% axis([x_min x_max y_min y_max], 'square');                  % Set axis
-%                                                             % Plot image
-% imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
-% scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*24)+1);       % Visibility
-% scatter(cur_state(1), cur_state(2), 'filled');              % Car
-% 
-% ax = subplot(1,2,2);                                        % Right plot
-% hold on;
-% axis([x_min x_max y_min y_max], 'square');                  % Set axis
-%                                                             % Plot image
-% imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
-% ax.ColorOrderIndex = 2;                                     % Get some nice orange
-% scatter(cur_state(1), cur_state(2), 100, 'filled');         % Car
-% ax.ColorOrderIndex = 4;                                     % Get some nice purple
-% point_array = plot(state_tree(:,1), state_tree(:,2), '*');  % Plot the nodes
-% scatter(next_state(1), next_state(2), 'filled');            % Next State
-% 
-% % lets make some lines
-% x_points = [state_tree(2:end, 1), state_tree(parents(2:end), 1)]';
-% y_points = [state_tree(2:end, 2), state_tree(parents(2:end), 2)]';
-% line_array = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
-
-% Find path
-%goal = [rand(1) * (x_max - x_min - 2*radius) + x_min + radius, rand(1) * (y_max - y_min - 2*radius) + y_min + radius];
-% goal = [8.3785, 5.7273];
-% [path, length] = evaluateTree(state_tree, parents, goal, radius);

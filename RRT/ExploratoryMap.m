@@ -16,7 +16,7 @@ classdef ExploratoryMap < Map
         view_width
         max_distance
         obstacle_cuttoff
-%         max_knowledge
+        free_space
     end
 
     methods
@@ -30,9 +30,8 @@ classdef ExploratoryMap < Map
             obj.max_distance = max_distance;
             obj.obstacle_cuttoff = obstacle_cutoff;
             
-%             visible_points = obj.simulate_camera([0, 0, pi/4], false);  % Generate a camera sim vis from the bottom corner looking diagonally
-%             obj.max_knowledge = sum(visible_points(:,3)) / obj.scale^2; % Sum up visibilities then scale to world coordinates
-            
+            % Used to determine the exploration progress
+            obj.free_space = sum(~obj.obstacle_array, [], 'all');           
         end
         
         function knowledge = evaluate_state(obj, state)
@@ -85,38 +84,14 @@ classdef ExploratoryMap < Map
                 vector_count = obj.evaluation_vector_count;
             end
             % Location in internal units
-            pos_x = round(state(1) * obj.scale);
-            pos_y = round(state(2) * obj.scale);
+            pos_x = state(1) * obj.scale;
+            pos_y = state(2) * obj.scale;
 
             % figure out vectors' tails
-            vector_end_points = zeros(vector_count,2);   % vector_countx2 array for storing tail points
+            vector_end_points = zeros(vector_count,2);   % vector_count x 2 array for storing tail points
             for v=1:vector_count
-                projection_angle = state(3)+obj.view_width/2 - ((v-1) * obj.view_width/(vector_count-1));   % Get the angle to compute
-                for d=1:obj.max_distance*obj.scale
-                    % Internal position of end of ray
-                    x = round(pos_x + d * cos(projection_angle));
-                    y = round(pos_y + d * sin(projection_angle));
-                    % Check that [x,y] is within bounds of map
-                    if x >= obj.x_min*obj.scale && x < obj.x_max*obj.scale && y >= obj.y_min*obj.scale && y < obj.y_max*obj.scale
-                        [row, col] = obj.get_rc_internal(x, y);
-                        if execution && obj.obstacle_array(row, col) == 1 || (~execution && obj.observation_array(row, col) == 1)
-                            % Found an obstacle; terminate the vector
-                            vector_end_points(v,:) = [x,y];
-                            break;
-                        end
-                        if d == obj.max_distance*obj.scale
-                            % Didn't find a wall, but can no longer see
-                            vector_end_points(v,:) = [x,y];
-                        end
-                        % continue 'raycasting'
-                    else
-                        % Went outside bounds, end at last point
-                        x = round(pos_x + (d-1) * cos(projection_angle));
-                        y = round(pos_y + (d-1) * sin(projection_angle));
-                        vector_end_points(v,:) = [x,y];
-                        break;
-                    end
-                end
+                projection_angle = state(3)+obj.view_width/2 - ((v-1)*obj.view_width/(vector_count-1));   % Get the angle to compute
+                vector_end_points(v,:) = obj.raycast(pos_x, pos_y, projection_angle, execution);
             end
 
             % Create n-1 triangles out of these n vectors plus the starting point
@@ -170,18 +145,71 @@ classdef ExploratoryMap < Map
             % Figure out how well you see these points
             for i=1:size(visible_points, 1)
                 % Figure out distance
-                dist_x = abs(visible_points(i, 1) - pos_x);
-                dist_y = abs(visible_points(i, 2) - pos_y);
+                dist_x = visible_points(i, 1) - pos_x;
+                dist_y = visible_points(i, 2) - pos_y;
                 dist = sqrt(dist_y^2 + dist_x^2);
                 % Figure out visibility (1 == max, 0 = min)
                 visible_points(i, 3) = max([1 - dist / (obj.max_distance * obj.scale), 0]);
             end
         end
+        
+        function [x_end, y_end] = raycast(obj, pos_x, pos_y, projection_angle, execution)
+            % Raycasts on either the obstacle or observation map in order to simulate a camera's view
+            % Operates using internal units
+            
+            % Step through each point along the ray, using the internal scale so we don't miss any cells
+            for d=1:obj.max_dist * obj.scale
+                % Internal position of end of ray
+                x = pos_x + d * cos(projection_angle);
+                y = pos_y + d * sin(projection_angle);
+
+                % Check that [x,y] is within bounds of map
+                if x >= obj.x_min*obj.scale && x < obj.x_max*obj.scale && y >= obj.y_min*obj.scale && y < obj.y_max*obj.scale
+
+                    % Check if we hit an obstacle (using the relevant map)
+                    [row, col] = obj.get_rc_internal(x, y);
+                    if (execution && obj.obstacle_array(row, col) == 1) || (~execution && obj.observation_array(row, col) == 1)
+                        % Found an obstacle; terminate the vector here (so we detect the obstacle)
+                        x_end = x;
+                        y_end = y;
+                        break;
+                    end
+
+                    % Check if we hit the max distance
+                    if d == obj.max_distance * obj.scale
+                        % Didn't find a wall, but can no longer see
+                        x_end = x;
+                        y_end = y;
+                    end
+                    % Continue raycasting otherwise
+                else
+                    % Went outside bounds, end at last point
+                    x_end = pos_x + (d-1) * cos(projection_angle);
+                    y_end = pos_y + (d-1) * sin(projection_angle);
+                    break;
+                end
+            end
+        end
+        
+        function [x_pos, y_pos] = gen_rand_pos(obj)
+            % Generate a random postion within the bounds
+            % Override of Map class method that generates position in free space
+            % Since we only see the edges, it isn't worth even making sure the new point is free
+            x_pos = rand * (obj.x_max - obj.x_min) + obj.x_min;
+            y_pos = rand * (obj.y_max - obj.y_min) + obj.y_min;
+        end
+        
         function valid = check_pos_explore(obj, x_pos, y_pos)
             % Check if an x,y position is a valid position on the map (within bounds and free on observed map)
             [row, col] = obj.get_rc_internal(x_pos*obj.scale, y_pos*obj.scale);
             valid = x_pos >= obj.x_min && x_pos < obj.x_max && y_pos >= obj.y_min && y_pos < obj.y_max && obj.observation_array(row, col) ~= 1;
             return;
+        end         
+        
+        function progress = get_exploration_progress(obj)
+            % Determine what percentage of the obstacle free map has been explored
+            observation = sum(~obj.obstacle_array .* (0.5 - obj.observation_array) * 2, [], 'all');
+            progress = observation / obj.free_space;
         end
     end
 end
