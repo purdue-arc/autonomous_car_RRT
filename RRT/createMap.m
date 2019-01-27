@@ -3,11 +3,13 @@ close all;
 
 % Generate an m by n binary occupancy grid where the obstaces are clustered into islands or other shapes as opposed to being purely randomized
 
-n_rows = 50;
-n_cols = 50;
-initial_obstacles = 0.875;
-min_obstacle = 0.125;
-max_obstacle = 0.75;
+n_rows = 100;
+n_cols = 100;
+initial_obstacles = 0.95;
+min_obstacles = 0.075;
+max_obstacles = 0.75;
+n_free = 2;
+filename = "100_map.mat";
 
 rand_matrix = rand(n_rows, n_cols);
 
@@ -21,7 +23,7 @@ subplot(2,2,3);
 imshow(~obstacle_matrix_read, 'InitialMagnification', 'fit');
 %free = find(rand_matrix < 0.25);
 
-[r, c] = find((rand_matrix >= min_obstacle) & (rand_matrix < max_obstacle));
+[r, c] = find((rand_matrix >= min_obstacles) & (rand_matrix < max_obstacles));
 possible_obstacles = [r, c];
 
 neighbors = [0 1;
@@ -45,13 +47,13 @@ for i=1:size(possible_obstacles)
             num_neighbors = num_neighbors + obstacle_matrix_read(r,c);
         end
     end
-    if num_neighbors/8 >= rand_matrix(row, col)
+    if num_neighbors/size(neighbors,1) >= rand_matrix(row, col)
         obstacle_matrix_mod(row, col) = 1;
     end
 end
 
 subplot(1,2,2);
 imshow(~obstacle_matrix_mod, 'InitialMagnification', 'fit');
-    
-    
-    
+
+obstacle_matrix_mod(1:n_free, 1:n_free) = zeros(n_free);
+save(filename, "obstacle_matrix_mod");
