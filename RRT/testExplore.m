@@ -3,9 +3,9 @@ clear variables
 
 % Arbitrary values for the test
 x_min = 0;
-x_max = 10;
+x_max = 50;
 y_min = 0;
-y_max = 10;
+y_max = 50;
 num_steps = 120;    % When to stop exploring (in future use while loop?)
 
 create_video = true;
@@ -17,23 +17,27 @@ create_video = true;
 %               0 0 0 1 0;
 %               0 0 0 0 0];
 
-simple_map =  [ 1 0 0 0 0 0 1 1 1 1;
-                1 0 0 0 0 0 1 0 1 1;
-                1 0 0 1 0 0 1 0 0 1;
-                0 0 0 1 0 0 0 0 0 1;
-                0 0 1 1 1 0 0 0 0 0;
-                0 0 0 0 1 0 0 0 0 0;
-                0 0 0 0 0 0 0 1 0 0;
-                1 0 0 0 0 0 0 1 0 0;
-                0 0 0 0 0 0 0 0 0 1;
-                0 0 0 1 0 0 0 0 0 1];
+% simple_map =  [ 1 0 0 0 0 0 1 1 1 1;
+%                 1 0 0 0 0 0 1 0 1 1;
+%                 1 0 0 1 0 0 1 0 0 1;
+%                 0 0 0 1 0 0 0 0 0 1;
+%                 0 0 1 1 1 0 0 0 0 0;
+%                 0 0 0 0 1 0 0 0 0 0;
+%                 0 0 0 0 0 0 0 1 0 0;
+%                 1 0 0 0 0 0 0 1 0 0;
+%                 0 0 0 0 0 0 0 0 0 1;
+%                 0 0 0 1 0 0 0 0 0 1];
+
+filename = "50_map.mat";
+mat = matfile(filename);
+simple_map = mat.obstacle_matrix_mod;
 
 scale = 10;                 % there should be how many cell-lengths per unit (meter)
 execution_vector_count = 90;% Number of vectors to cast when executing a postion, increases accuracy, but also calculation time
 evaluation_vector_count = 5;% Number of vectors to cast when evaluation a position. higher increases accuracy, but also evaluation time.
 view_width = deg2rad(90);   % Field of view of the robot
 max_distance = 10;          % Max distance to consider viewable by robot (linear falloff)
-obstacle_cutoff = 0.75;     % At what point do you assume something is an obstacle
+obstacle_cutoff = 0.55;     % At what point do you assume something is an obstacle
 num_nodes = 250;            % How many nodes to generate per step
           
 map = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_vector_count, execution_vector_count, view_width, max_distance, obstacle_cutoff);
