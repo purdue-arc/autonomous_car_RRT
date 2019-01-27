@@ -28,7 +28,7 @@ create_video = true;
 %                 0 0 0 0 0 0 0 0 0 1;
 %                 0 0 0 1 0 0 0 0 0 1];
 
-filename = "50_map.mat";
+filename = "100_map.mat";
 mat = matfile(filename);
 simple_map = mat.obstacle_matrix_mod;
 
@@ -74,6 +74,9 @@ for i = 2:num_steps+1
     % Update the graphs
     clf;                                                        % Clear old stuff (since it can hang slightly off screen)
     ax = subplot(1,2,1);                                        % Left plot
+    title("Obstacle Map");
+    xlabel("X Position (m)");
+    ylabel("Y Position (m)");
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
@@ -83,6 +86,9 @@ for i = 2:num_steps+1
     scatter(cur_state(1), cur_state(2), 'filled');              % Car
     
     ax = subplot(1,2,2);                                        % Right plot
+    title("Observation Map");
+    xlabel("X Position (m)");
+    ylabel("Y Position (m)");
     hold on;
     axis([x_min x_max y_min y_max], 'square');                  % Set axis
                                                                 % Plot image
