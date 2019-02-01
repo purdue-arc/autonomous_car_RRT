@@ -18,7 +18,7 @@ simple_map = mat.obstacle_matrix;
 
 array2 = create_array_img(simple_map, 50, 10);
 
-cur_view = simulate_camera(array2, 10, [.5,.5,deg2rad(45)],true, 90);
+cur_view = simulate_camera(array2, 10, [.5, .5, deg2rad(45)], true, 90);
 
 set(gcf, 'Position', [300 200 1280 720]);
 colormap(flipud(gray));
@@ -29,8 +29,10 @@ title("Obstacle Map");
     axis([0 50 0 50], 'square');                  % Set axis
                                                                 % Plot image
 imagesc('XData', [0.5/10,  50 - 0.5/10], 'YData', [50 - 0.5/10,  0.5/10], 'CData', array2);
-
-plot(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*9)+1);       % Visibility
+cmap = flipud(autumn(256));
+color_index = round(cur_view(:,3)*255)+1;
+colors = cmap(color_index, :);
+scatter(cur_view(:,1)/10, cur_view(:,2)/10, 10, colors);       % Visibility
 
 end_view = zeros(91,2);
 for i = 0:90
@@ -44,8 +46,8 @@ end_view = end_view / 10;
 plot(end_view(:,1), end_view(:,2), 'o');       % Visibility
 %text(end_view(:,1), end_view(:,2), string(0:10:90)');
 
-[~, ~, path] = raycast(array2, 0.5, 0.5, deg2rad(89), true);
-plot(path(:,1)/10, path(:,2)/10, '.');
+% [~, ~, path] = raycast(array2, 0.5, 0.5, deg2rad(89), true);
+% plot(path(:,1)/10, path(:,2)/10, '.');
 
 
 
@@ -136,7 +138,7 @@ function visible_points = simulate_camera(map, scale, state, execution, vector_c
             end
 
             % Generate an array of just the internal points
-            visible_points = box_points(find(box_points(:,3)), :);  % col 1: x, col 2: y, col 3: vis (currently has 1)
+            visible_points = box_points(logical(box_points(:,3)), :);  % col 1: x, col 2: y, col 3: vis (currently has 1)
 
             % Figure out how well you see these points
             for i=1:size(visible_points, 1)
