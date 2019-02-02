@@ -89,9 +89,9 @@ classdef ExploratoryMap < Map
 
             % figure out vectors' tails
             vector_end_points = zeros(vector_count, 2);   % vector_count x 2 array for storing tail points
+            projection_angles = linspace(state(3) - obj.view_width/2, state(3) + obj.view_width/2, vector_count);
             for v=1:vector_count
-                projection_angle = state(3)+obj.view_width/2 - ((v-1)*obj.view_width/(vector_count-1));   % Get the angle to compute
-                [x_end, y_end] = obj.raycast(pos_x, pos_y, projection_angle, execution);
+                [x_end, y_end] = obj.raycast(pos_x, pos_y, projection_angles(v), execution);
                 vector_end_points(v,:) = [x_end, y_end];
             end
 
