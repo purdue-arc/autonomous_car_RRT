@@ -94,6 +94,10 @@ classdef ExploratoryMap < Map
                 [x_end, y_end] = obj.raycast(pos_x, pos_y, projection_angles(v), execution);
                 vector_end_points(v,:) = [x_end, y_end];
             end
+            
+            % From now on we will use rounded position
+            pos_x = round(pos_x);
+            pos_y = round(pos_y);
 
             % Create n-1 triangles out of these n vectors plus the starting point
             triangle_x = zeros(vector_count-1,3);
@@ -119,7 +123,7 @@ classdef ExploratoryMap < Map
             max_y = max(triangle_y, [], 'all');
 
             % Generate an array of these points to pass into the inpolygon function
-            num_points = ceil((max_x - min_x) * (max_y - min_y));
+            num_points = (max_x - min_x) * (max_y - min_y);
             box_points = zeros(num_points, 3);  % col 1: x, col 2: y, col 3: internal
 
             % Populate this array with points
@@ -161,8 +165,8 @@ classdef ExploratoryMap < Map
             % Step through each point along the ray, using the internal scale so we don't miss any cells
             for d=1:obj.max_distance * obj.scale
                 % Internal position of end of ray
-                x = pos_x + d * cos(projection_angle);
-                y = pos_y + d * sin(projection_angle);
+                x = round(pos_x + d * cos(projection_angle)); % Round here
+                y = round(pos_y + d * sin(projection_angle));
 
                 % Check that [x,y] is within bounds of map
                 if x >= obj.x_min*obj.scale && x < obj.x_max*obj.scale && y >= obj.y_min*obj.scale && y < obj.y_max*obj.scale
@@ -185,8 +189,8 @@ classdef ExploratoryMap < Map
                     % Continue raycasting otherwise
                 else
                     % Went outside bounds, end at last point
-                    x_end = pos_x + (d-1) * cos(projection_angle);
-                    y_end = pos_y + (d-1) * sin(projection_angle);
+                    x_end = round(pos_x + (d-1) * cos(projection_angle));   % and here
+                    y_end = round(pos_y + (d-1) * sin(projection_angle));
                     break;
                 end
             end
