@@ -10,7 +10,8 @@
 
 % Current Bugs:
 % raycast ends are all over place - ensure pre-allocated array is correct size * init pos is in right units
-% Large sizing
+% Large sizing - use units properly
+% Additional - linspace for calculating raycast angles
 
 filename = "100_map.mat";
 mat = matfile(filename);
@@ -37,13 +38,36 @@ scatter(double(cur_view(:,1))/10, double(cur_view(:,2))/10, 10, colors);       %
 end_view = zeros(91,2, 'uint8');
 for i = 0:90
     angle = deg2rad(i);
-    [x_end, y_end] = raycast(array2, 0.5/10, 0.5/10, angle, true);
+    [x_end, y_end] = raycast(array2, 0.5 * 10, 0.5 * 10, angle, true);
     end_view(i+1,:) = [x_end, y_end];
 end
 
-end_view = end_view / 10;
+end_view = double(end_view) / 10;
 
-plot(end_view(:,1), end_view(:,2), 'o');       % Visibility
+plot(end_view(:,1), end_view(:,2), 'r-');       % Visibility
+
+
+triangle_x = zeros(91-1,4);
+triangle_y = zeros(91-1,4);
+
+for v=1:(91-1)
+    % Initial point
+    triangle_x(v,1) = 0.5;
+    triangle_y(v,1) = 0.5;
+    % Left tail
+    triangle_x(v,2) = end_view(v, 1);
+    triangle_y(v,2) = end_view(v, 2);
+    % Right tail
+    triangle_x(v,3) = end_view(v+1, 1);
+    triangle_y(v,3) = end_view(v+1, 2);
+    % Initial point
+    triangle_x(v,4) = 0.5;
+    triangle_y(v,4) = 0.5;
+end
+
+plot(triangle_x', triangle_y', 'k-');       % Visibility
+
+
 %text(end_view(:,1), end_view(:,2), string(0:10:90)');
 
 % [~, ~, path] = raycast(array2, 0.5, 0.5, deg2rad(89), true);
@@ -87,9 +111,9 @@ function [visible_points, visible_points_vis] = simulate_camera(map, scale, stat
             % figure out vectors' tails
             % Create column vectors of x and y
             vector_end_points = zeros(vector_count, 2, 'int16');   % vector_count x 2 array for storing tail points
-            for v=1:vector_count
-                projection_angle = state(3) + deg2rad(90)/2 - ((v-1)*deg2rad(90)/(vector_count-1));   % Get the angle to compute
-                [x_end, y_end] = raycast(map, pos_x, pos_y, projection_angle, execution);
+            angles = linspace(state(3) - deg2rad(45), state(3) + deg2rad(45), vector_count);
+            for v = 1:vector_count
+                [x_end, y_end] = raycast(map, pos_x, pos_y, angles(v), execution);
                 vector_end_points(v,:) = [x_end, y_end];
             end
 
@@ -97,16 +121,16 @@ function [visible_points, visible_points_vis] = simulate_camera(map, scale, stat
             triangle_x = zeros(vector_count-1,3, 'int16');
             triangle_y = zeros(vector_count-1,3, 'int16');
 
-            for v=1:(vector_count-1)
+            for a=1:(vector_count-1)
                 % Initial point
-                triangle_x(v,1) = pos_x;
-                triangle_y(v,1) = pos_y;
+                triangle_x(a,1) = pos_x;
+                triangle_y(a,1) = pos_y;
                 % Left tail
-                triangle_x(v,2) = vector_end_points(v, 1);
-                triangle_y(v,2) = vector_end_points(v, 2);
+                triangle_x(a,2) = vector_end_points(a, 1);
+                triangle_y(a,2) = vector_end_points(a, 2);
                 % Right tail
-                triangle_x(v,3) = vector_end_points(v+1, 1);
-                triangle_y(v,3) = vector_end_points(v+1, 2);
+                triangle_x(a,3) = vector_end_points(a+1, 1);
+                triangle_y(a,3) = vector_end_points(a+1, 2);
             end
 
             % Determine the boundaries of the points that we need to sample
@@ -117,9 +141,9 @@ function [visible_points, visible_points_vis] = simulate_camera(map, scale, stat
             max_y = max(triangle_y, [], 'all');
 
             % Generate an array of these points to pass into the inpolygon function
-            num_points = (max_x - min_x) * (max_y - min_y);             % These will be clean now
-            box_points = zeros(num_points, 2, 'int16');  % col 1: x, col 2: y, col 3: internal
-            box_points_vis = zeros(num_points, 1,'logical');
+            num_points = (max_x - min_x) * (max_y - min_y);
+            box_points = zeros(num_points, 2, 'int16');  % col 1: x, col 2: y
+            box_points_vis = zeros(num_points, 1, 'logical');
 
             % Populate this array with points
             x = min_x;
@@ -135,8 +159,8 @@ function [visible_points, visible_points_vis] = simulate_camera(map, scale, stat
             end
 
             % Figure out which of these points are visible (inside the generated triangles)
-            for v=1:(vector_count-1)
-                box_points_vis = box_points_vis | inpolygon(box_points(:,1), box_points(:,2), triangle_x(v,:)', triangle_y(v,:)');
+            for a=1:(vector_count-1)
+                box_points_vis = box_points_vis | inpolygon(box_points(:,1), box_points(:,2), triangle_x(a,:)', triangle_y(a,:)');
             end
 
             % Generate an array of just the internal points
