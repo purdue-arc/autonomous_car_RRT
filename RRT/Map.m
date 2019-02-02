@@ -23,23 +23,8 @@ classdef Map < handle
             obj.y_max = y_max;
             obj.scale = scale;
             
-            obj.obstacle_array = zeros((y_max - y_min) * scale, (x_max - x_min) * scale);
-            r_scale = size(obj.obstacle_array, 1) / size(simple_map, 1);
-            c_scale = size(obj.obstacle_array, 2) / size(simple_map, 2);
-            
-            % Need to populate the true map with values 
-            for i=1:size(simple_map, 1)
-                for j=1:size(simple_map, 2)
-                    % Copy data to relevant blocks
-                    if simple_map(i,j) == 1
-                        for k=(1 + r_scale*(i-1)):(r_scale + r_scale*(i-1))
-                            for l=(1 + c_scale*(j-1)):(c_scale + c_scale*(j-1))
-                                obj.obstacle_array(k,l) = 1;
-                            end
-                        end
-                    end
-                end
-            end
+            resize_factor = (y_max - y_min) * scale / (size(simple_map, 1));
+            obj.obstacle_array = imresize(simple_map, resize_factor, 'nearest');
         end
         
         function valid = check_pos(obj, x_pos, y_pos)
