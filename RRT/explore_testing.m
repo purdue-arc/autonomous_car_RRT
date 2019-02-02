@@ -18,7 +18,7 @@ simple_map = mat.obstacle_matrix;
 
 array2 = create_array_img(simple_map, 50, 10);
 
-cur_view = simulate_camera(array2, 10, [.5, .5, deg2rad(45)], true, 90);
+[cur_view, cur_view_vis] = simulate_camera(array2, 10, [.5, .5, deg2rad(45)], true, 91);
 
 set(gcf, 'Position', [300 200 1280 720]);
 colormap(flipud(gray));
@@ -29,15 +29,15 @@ title("Obstacle Map");
     axis([0 50 0 50], 'square');                  % Set axis
                                                                 % Plot image
 imagesc('XData', [0.5/10,  50 - 0.5/10], 'YData', [50 - 0.5/10,  0.5/10], 'CData', array2);
-cmap = flipud(autumn(256));
-color_index = round(cur_view(:,3)*255)+1;
+cmap = flipud(autumn(100));
+color_index = uint8(cur_view_vis * 99) + 1;
 colors = cmap(color_index, :);
 scatter(cur_view(:,1)/10, cur_view(:,2)/10, 10, colors);       % Visibility
 
-end_view = zeros(91,2);
+end_view = zeros(91,2, 'uint8');
 for i = 0:90
     angle = deg2rad(i);
-    [x_end, y_end, ~] = raycast(array2, 0.5, 0.5, angle, true);
+    [x_end, y_end] = raycast(array2, 0.5/10, 0.5/10, angle, true);
     end_view(i+1,:) = [x_end, y_end];
 end
 
@@ -77,7 +77,7 @@ function obstacle_array = create_array_img(simple_map, size, scale)
     obstacle_array = imresize(simple_map, adj, 'nearest');
 end
 
-function visible_points = simulate_camera(map, scale, state, execution, vector_count)
+function [visible_points, visible_points_vis] = simulate_camera(map, scale, state, execution, vector_count)
             % simCamera This simulates the view of a camera by creating a 2d triangle of view based off of n vectors split accross a certain width
         
             % Location in internal units
@@ -85,16 +85,17 @@ function visible_points = simulate_camera(map, scale, state, execution, vector_c
             pos_y = state(2) * scale;
 
             % figure out vectors' tails
-            vector_end_points = zeros(vector_count, 2);   % vector_count x 2 array for storing tail points
+            % Create column vectors of x and y
+            vector_end_points = zeros(vector_count, 2, 'int16');   % vector_count x 2 array for storing tail points
             for v=1:vector_count
-                projection_angle = state(3)+ deg2rad(90)/2 - ((v-1)*deg2rad(90)/(vector_count-1));   % Get the angle to compute
+                projection_angle = state(3) + deg2rad(90)/2 - ((v-1)*deg2rad(90)/(vector_count-1));   % Get the angle to compute
                 [x_end, y_end] = raycast(map, pos_x, pos_y, projection_angle, execution);
                 vector_end_points(v,:) = [x_end, y_end];
             end
 
             % Create n-1 triangles out of these n vectors plus the starting point
-            triangle_x = zeros(vector_count-1,3);
-            triangle_y = zeros(vector_count-1,3);
+            triangle_x = zeros(vector_count-1,3, 'int16');
+            triangle_y = zeros(vector_count-1,3, 'int16');
 
             for v=1:(vector_count-1)
                 % Initial point
@@ -117,7 +118,8 @@ function visible_points = simulate_camera(map, scale, state, execution, vector_c
 
             % Generate an array of these points to pass into the inpolygon function
             num_points = (max_x - min_x) * (max_y - min_y);             % These will be clean now
-            box_points = zeros(num_points, 3);  % col 1: x, col 2: y, col 3: internal
+            box_points = zeros(num_points, 2, 'int16');  % col 1: x, col 2: y, col 3: internal
+            box_points_vis = zeros(num_points, 1,'logical');
 
             % Populate this array with points
             x = min_x;
@@ -134,43 +136,48 @@ function visible_points = simulate_camera(map, scale, state, execution, vector_c
 
             % Figure out which of these points are visible (inside the generated triangles)
             for v=1:(vector_count-1)
-                box_points(:,3) = box_points(:,3) | inpolygon(box_points(:,1), box_points(:,2), transpose(triangle_x(v,:)), transpose(triangle_y(v,:)));
+                box_points_vis = box_points_vis | inpolygon(box_points(:,1), box_points(:,2), triangle_x(v,:)', triangle_y(v,:)');
             end
 
             % Generate an array of just the internal points
-            visible_points = box_points(logical(box_points(:,3)), :);  % col 1: x, col 2: y, col 3: vis (currently has 1)
-
+            visible_points = int16(box_points(box_points_vis, :));  % col 1: x, col 2: y, col 3: vis (currently has 1)
+            visible_points_vis = zeros(sum(box_points_vis), 1);
+            
             % Figure out how well you see these points
-            for i=1:size(visible_points, 1)
-                % Figure out distance
-                dist_x = visible_points(i, 1) - pos_x;
-                dist_y = visible_points(i, 2) - pos_y;
-                dist = sqrt(dist_y^2 + dist_x^2);
-                % Figure out visibility (1 == max, 0 = min)
-                visible_points(i, 3) = max([1 - dist / (10* scale), 0]);
-            end
+            dist = sqrt(double((visible_points(:,1) - pos_x).^2 + visible_points(:,2).^2));
+            visible_points_vis = max(1 - dist/(scale*10) + zeros(size(visible_points, 1),1), [], 2);
+            
+            
+            
+            
+%             for i=1:size(visible_points, 1)
+%                 % Figure out distance
+%                 dist_x = visible_points(i, 1) - pos_x;
+%                 dist_y = visible_points(i, 2) - pos_y;
+%                 dist = sqrt(dist_y^2 + dist_x^2);
+%                 % Figure out visibility (1 == max, 0 = min)
+%                 visible_points_vis = max([1 - dist / (10* scale), 0]);
+%             end
         end
         
-function [x_end, y_end, path] = raycast(map, pos_x, pos_y, projection_angle, execution)
+function [x_end, y_end] = raycast(map, pos_x, pos_y, projection_angle, execution)
     % Raycasts on either the obstacle or observation map in order to simulate a camera's view
     % Operates using internal units
     max_distance = 10;
     scale = 10;
     
-    %fprintf("angle is: %g\n", rad2deg(projection_angle));
+    fprintf("angle is: %g\n", rad2deg(projection_angle));
     
-    path = zeros(max_distance * scale,2);
+    %path = zeros(max_distance * scale,2);
 
     % Step through each point along the ray, using the internal scale so we don't miss any cells
     for d=1:max_distance * scale
         % Internal position of end of ray
-        x = round(pos_x*scale + d * cos(projection_angle)); % Round here
-        y = round(pos_y*scale + d * sin(projection_angle));
+        x = round(pos_x + d * cos(projection_angle)); % Round here
+        y = round(pos_y + d * sin(projection_angle));
 
         % Check that [x,y] is within bounds of map
         if x >= 0 && x < 50*scale && y >+ 0 && y < 50*scale
-            
-            path(d,:) = [x,y];
 
             % Check if we hit an obstacle (using the relevant map)
             col = floor(x) + 1;
