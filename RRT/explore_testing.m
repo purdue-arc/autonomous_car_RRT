@@ -32,7 +32,7 @@ imagesc('XData', [0.5/10,  50 - 0.5/10], 'YData', [50 - 0.5/10,  0.5/10], 'CData
 cmap = flipud(autumn(100));
 color_index = uint8(cur_view_vis * 99) + 1;
 colors = cmap(color_index, :);
-scatter(cur_view(:,1)/10, cur_view(:,2)/10, 10, colors);       % Visibility
+scatter(double(cur_view(:,1))/10, double(cur_view(:,2))/10, 10, colors);       % Visibility
 
 end_view = zeros(91,2, 'uint8');
 for i = 0:90
@@ -145,7 +145,7 @@ function [visible_points, visible_points_vis] = simulate_camera(map, scale, stat
             
             % Figure out how well you see these points
             dist = sqrt(double((visible_points(:,1) - pos_x).^2 + visible_points(:,2).^2));
-            visible_points_vis = max(1 - dist/(scale*10) + zeros(size(visible_points, 1),1), [], 2);
+            visible_points_vis = max([1 - dist/(scale*10), zeros(size(visible_points, 1),1)], [], 2);
             
             
             
