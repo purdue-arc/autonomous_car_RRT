@@ -33,7 +33,7 @@ mat = matfile(filename);
 simple_map = mat.obstacle_matrix;
 
 scale = 10;                     % there should be how many cell-lengths per unit (meter)
-execution_vector_count = 90;    % Number of vectors to cast when executing a postion, increases accuracy, but also calculation time
+execution_vector_count = 91;    % Number of vectors to cast when executing a postion, increases accuracy, but also calculation time
 evaluation_vector_count = 5;    % Number of vectors to cast when evaluation a position. higher increases accuracy, but also evaluation time.
 view_width = deg2rad(90);       % Field of view of the robot
 max_distance = 10;              % Max distance to consider viewable by robot (linear falloff)

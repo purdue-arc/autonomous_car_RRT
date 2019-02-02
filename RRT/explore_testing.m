@@ -46,36 +46,10 @@ end_view = double(end_view) / 10;
 
 plot(end_view(:,1), end_view(:,2), 'r-');       % Visibility
 
+polygon_x = [0.5, end_view(:,1)', 0.5]';
+polygon_y = [0.5, end_view(:,2)', 0.5]';
 
-triangle_x = zeros(91-1,4);
-triangle_y = zeros(91-1,4);
-
-for v=1:(91-1)
-    % Initial point
-    triangle_x(v,1) = 0.5;
-    triangle_y(v,1) = 0.5;
-    % Left tail
-    triangle_x(v,2) = end_view(v, 1);
-    triangle_y(v,2) = end_view(v, 2);
-    % Right tail
-    triangle_x(v,3) = end_view(v+1, 1);
-    triangle_y(v,3) = end_view(v+1, 2);
-    % Initial point
-    triangle_x(v,4) = 0.5;
-    triangle_y(v,4) = 0.5;
-end
-
-plot(triangle_x', triangle_y', 'k-');       % Visibility
-
-
-%text(end_view(:,1), end_view(:,2), string(0:10:90)');
-
-% [~, ~, path] = raycast(array2, 0.5, 0.5, deg2rad(89), true);
-% plot(path(:,1)/10, path(:,2)/10, '.');
-
-
-
-
+plot(polygon_x, polygon_y, 'k-');       % Visibility
 
 function obstacle_array = create_array(simple_map, size, scale)
     obstacle_array = zeros(size * scale);
@@ -117,28 +91,32 @@ function [visible_points, visible_points_vis] = simulate_camera(map, scale, stat
                 vector_end_points(v,:) = [x_end, y_end];
             end
 
-            % Create n-1 triangles out of these n vectors plus the starting point
-            triangle_x = zeros(vector_count-1,3, 'int16');
-            triangle_y = zeros(vector_count-1,3, 'int16');
+%             % Create n-1 triangles out of these n vectors plus the starting point
+%             triangle_x = zeros(vector_count-1,3, 'int16');
+%             triangle_y = zeros(vector_count-1,3, 'int16');
+% 
+%             for a=1:(vector_count-1)
+%                 % Initial point
+%                 triangle_x(a,1) = pos_x;
+%                 triangle_y(a,1) = pos_y;
+%                 % Left tail
+%                 triangle_x(a,2) = vector_end_points(a, 1);
+%                 triangle_y(a,2) = vector_end_points(a, 2);
+%                 % Right tail
+%                 triangle_x(a,3) = vector_end_points(a+1, 1);
+%                 triangle_y(a,3) = vector_end_points(a+1, 2);
+%             end
 
-            for a=1:(vector_count-1)
-                % Initial point
-                triangle_x(a,1) = pos_x;
-                triangle_y(a,1) = pos_y;
-                % Left tail
-                triangle_x(a,2) = vector_end_points(a, 1);
-                triangle_y(a,2) = vector_end_points(a, 2);
-                % Right tail
-                triangle_x(a,3) = vector_end_points(a+1, 1);
-                triangle_y(a,3) = vector_end_points(a+1, 2);
-            end
+            % Create a really big n-gon of the base point and all the end points
+            polygon_x = int16([pos_x, vector_end_points(:,1)']');
+            polygon_y = int16([pos_y, vector_end_points(:,2)']');
 
             % Determine the boundaries of the points that we need to sample
             % These points form a big box including all points
-            min_x = min(triangle_x, [], 'all');
-            max_x = max(triangle_x, [], 'all');
-            min_y = min(triangle_y, [], 'all');
-            max_y = max(triangle_y, [], 'all');
+            min_x = min(polygon_x, [], 'all');
+            max_x = max(polygon_x, [], 'all');
+            min_y = min(polygon_y, [], 'all');
+            max_y = max(polygon_y, [], 'all');
 
             % Generate an array of these points to pass into the inpolygon function
             num_points = (max_x - min_x) * (max_y - min_y);
@@ -159,12 +137,15 @@ function [visible_points, visible_points_vis] = simulate_camera(map, scale, stat
             end
 
             % Figure out which of these points are visible (inside the generated triangles)
-            for a=1:(vector_count-1)
-                box_points_vis = box_points_vis | inpolygon(box_points(:,1), box_points(:,2), triangle_x(a,:)', triangle_y(a,:)');
-            end
+            
+            box_points_vis = inpolygon(box_points(:,1), box_points(:,2), polygon_x, polygon_y);
+            
+%             for a=1:(vector_count-1)
+%                 box_points_vis = box_points_vis | inpolygon(box_points(:,1), box_points(:,2), triangle_x(a,:)', triangle_y(a,:)');
+%             end
 
             % Generate an array of just the internal points
-            visible_points = int16(box_points(box_points_vis, :));  % col 1: x, col 2: y, col 3: vis (currently has 1)
+            visible_points = box_points(box_points_vis, :);  % col 1: x, col 2: y, col 3: vis (currently has 1)
             visible_points_vis = zeros(sum(box_points_vis), 1);
             
             % Figure out how well you see these points
