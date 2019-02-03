@@ -7,6 +7,8 @@
 % gpu array?
 % arrayfun?
 % logical indexing
+% types
+% use inpolygon better
 
 % Current Bugs:
 % raycast ends are all over place - ensure pre-allocated array is correct size * init pos is in right units

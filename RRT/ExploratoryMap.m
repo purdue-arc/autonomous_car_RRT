@@ -76,7 +76,7 @@ classdef ExploratoryMap < Map
             view = visible_points./[obj.scale, obj.scale, 1];
         end          
         
-        function visible_points = simulate_camera(obj, state, execution)
+        function [visible_points, visible_points_vis] = simulate_camera(obj, state, execution)
             % simCamera This simulates the view of a camera by creating a 2d triangle of view based off of n vectors split accross a certain width
             if execution
                 vector_count = obj.execution_vector_count;
@@ -88,20 +88,20 @@ classdef ExploratoryMap < Map
             pos_y = state(2) * obj.scale;
 
             % figure out vectors' tails
-            vector_end_points = zeros(vector_count, 2);   % vector_count x 2 array for storing tail points
+            vector_end_points = int16(zeros(vector_count, 2));      % vector_count x 2 array for storing tail points
             projection_angles = linspace(state(3) - obj.view_width/2, state(3) + obj.view_width/2, vector_count);
             for v=1:vector_count
                 [x_end, y_end] = obj.raycast(pos_x, pos_y, projection_angles(v), execution);
-                vector_end_points(v,:) = [x_end, y_end];
+                vector_end_points(v,:) = [x_end, y_end];    % Stored as int, since internal units
             end
             
             % From now on we will use rounded position
-            pos_x = round(pos_x);
-            pos_y = round(pos_y);
+            pos_x = int16(pos_x);
+            pos_y = int16(pos_y);
            
             % Create a really big n-gon of the base point and all the end points
-            polygon_x = [pos_x, vector_end_points(:,1)']';
-            polygon_y = [pos_y, vector_end_points(:,2)']';
+            polygon_x = int16([pos_x, vector_end_points(:,1)']');
+            polygon_y = int16([pos_y, vector_end_points(:,2)']');
 
             % Determine the boundaries of the points that we need to sample
             % These points form a big box including all points
@@ -112,7 +112,7 @@ classdef ExploratoryMap < Map
 
             % Generate an array of these points to pass into the inpolygon function
             num_points = (max_x - min_x) * (max_y - min_y);
-            box_points = zeros(num_points, 3);  % col 1: x, col 2: y, col 3: internal
+            box_points = zeros(num_points, 3, 'int16');             % col 1: x, col 2: y
 
             % Populate this array with points
             x = min_x;
@@ -128,20 +128,14 @@ classdef ExploratoryMap < Map
             end
 
             % Figure out which of these points are visible (inside the generated n-gon)
-            box_points(:,3) = inpolygon(box_points(:,1), box_points(:,2), polygon_x, polygon_y);
+            box_points_vis = inpolygon(box_points(:,1), box_points(:,2), polygon_x, polygon_y);
 
             % Generate an array of just the internal points
-            visible_points = box_points(find(box_points(:,3)), :);  % col 1: x, col 2: y, col 3: vis (currently has 1)
+            visible_points = box_points(box_points_vis, :);  % col 1: x, col 2: y
 
             % Figure out how well you see these points
-            for i=1:size(visible_points, 1)
-                % Figure out distance
-                dist_x = visible_points(i, 1) - pos_x;
-                dist_y = visible_points(i, 2) - pos_y;
-                dist = sqrt(dist_y^2 + dist_x^2);
-                % Figure out visibility (1 == max, 0 = min)
-                visible_points(i, 3) = max([1 - dist / (obj.max_distance * obj.scale), 0]);
-            end
+            dist = sqrt(double((visible_points(:,1) - pos_x).^2 + visible_points(:,2).^2));
+            visible_points_vis = max([1 - dist/(scale*10), zeros(size(visible_points, 1),1)], [], 2);
         end
         
         function [x_end, y_end] = raycast(obj, pos_x, pos_y, projection_angle, execution)
