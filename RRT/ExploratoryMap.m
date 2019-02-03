@@ -38,30 +38,29 @@ classdef ExploratoryMap < Map
             % Evaluate knowledge gained from a certain position with only existing knowledge
             % We don't know that hidden obstacles exist so we 'see' past them when predicting how much we will see
             % Rows for each point, col 1: x, col 2: y, col 3: visibility
-            visible_points = obj.simulate_camera(state, false);
+            [points, vis] = obj.simulate_camera(state, false);
             knowledge = 0;
-            for i=1:size(visible_points, 1)
-                [row, col] = obj.get_rc_internal(visible_points(i,1), visible_points(i,2));
+            for i=1:size(points, 1)
+                [row, col] = obj.get_rc_internal(points(i,1), points(i,2));
                 current_vis = abs(0.5 - obj.observation_array(row, col)) * 2;
-                new_vis = visible_points(i,3);
+                new_vis = vis(3);
                 if new_vis > current_vis
                     knowledge = knowledge + new_vis - current_vis;
                 end
             end
-%             scaled_knowledge = knowledge / obj.scale^2 / obj.max_knowledge;
         end
         
         function view = execute_state(obj, state)
             % Rows for each point, col 1: x, col 2: y, col 3: visibility
-            visible_points = obj.simulate_camera(state, true);
-            for i=1:size(visible_points, 1)
-                [row, col] = obj.get_rc_internal(visible_points(i,1), visible_points(i,2));
+            [points, vis] = obj.simulate_camera(state, true);
+            for i=1:size(points, 1)
+                [row, col] = obj.get_rc_internal(points(i,1), points(i,2));
                 current_obs = obj.observation_array(row, col);
                 % Figure out what the new observation is on a scale of 0 to 1
-                if obj.get_cell_internal(visible_points(i,1), visible_points(i,2)) == 1
-                    new_obs = 0.5 + 0.5 * visible_points(i,3);
+                if obj.get_cell_internal(points(i,1), points(i,2))
+                    new_obs = 0.5 + 0.5 * vis(3);
                 else
-                    new_obs = 0.5 * (1 - visible_points(i,3));
+                    new_obs = 0.5 * (1 - vis(3));
                 end
                 % If the new observation is more accurate . . .
                 if abs(.5 - new_obs) > abs(.5 - current_obs)
@@ -73,7 +72,7 @@ classdef ExploratoryMap < Map
                     end
                 end
             end
-            view = visible_points./[obj.scale, obj.scale, 1];
+            view = [double(points) / obj.scale, vis];
         end          
         
         function [visible_points, visible_points_vis] = simulate_camera(obj, state, execution)
@@ -135,7 +134,7 @@ classdef ExploratoryMap < Map
 
             % Figure out how well you see these points
             dist = sqrt(double((visible_points(:,1) - pos_x).^2 + visible_points(:,2).^2));
-            visible_points_vis = max([1 - dist/(scale*10), zeros(size(visible_points, 1),1)], [], 2);
+            visible_points_vis = max([1 - dist/(obj.scale*obj.max_distance), zeros(size(visible_points, 1),1)], [], 2);
         end
         
         function [x_end, y_end] = raycast(obj, pos_x, pos_y, projection_angle, execution)
