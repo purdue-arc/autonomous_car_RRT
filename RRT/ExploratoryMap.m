@@ -98,29 +98,17 @@ classdef ExploratoryMap < Map
             % From now on we will use rounded position
             pos_x = round(pos_x);
             pos_y = round(pos_y);
-
-            % Create n-1 triangles out of these n vectors plus the starting point
-            triangle_x = zeros(vector_count-1,3);
-            triangle_y = zeros(vector_count-1,3);
-
-            for v=1:(vector_count-1)
-                % Initial point
-                triangle_x(v,1) = pos_x;
-                triangle_y(v,1) = pos_y;
-                % Left tail
-                triangle_x(v,2) = vector_end_points(v, 1);
-                triangle_y(v,2) = vector_end_points(v, 2);
-                % Right tail
-                triangle_x(v,3) = vector_end_points(v+1, 1);
-                triangle_y(v,3) = vector_end_points(v+1, 2);
-            end
+           
+            % Create a really big n-gon of the base point and all the end points
+            polygon_x = [pos_x, vector_end_points(:,1)']';
+            polygon_y = [pos_y, vector_end_points(:,2)']';
 
             % Determine the boundaries of the points that we need to sample
             % These points form a big box including all points
-            min_x = min(triangle_x, [], 'all');
-            max_x = max(triangle_x, [], 'all');
-            min_y = min(triangle_y, [], 'all');
-            max_y = max(triangle_y, [], 'all');
+            min_x = min(polygon_x, [], 'all');
+            max_x = max(polygon_x, [], 'all');
+            min_y = min(polygon_y, [], 'all');
+            max_y = max(polygon_y, [], 'all');
 
             % Generate an array of these points to pass into the inpolygon function
             num_points = (max_x - min_x) * (max_y - min_y);
@@ -139,10 +127,8 @@ classdef ExploratoryMap < Map
                 end
             end
 
-            % Figure out which of these points are visible (inside the generated triangles)
-            for v=1:(vector_count-1)
-                box_points(:,3) = box_points(:,3) | inpolygon(box_points(:,1), box_points(:,2), transpose(triangle_x(v,:)), transpose(triangle_y(v,:)));
-            end
+            % Figure out which of these points are visible (inside the generated n-gon)
+            box_points(:,3) = inpolygon(box_points(:,1), box_points(:,2), polygon_x, polygon_y);
 
             % Generate an array of just the internal points
             visible_points = box_points(find(box_points(:,3)), :);  % col 1: x, col 2: y, col 3: vis (currently has 1)
