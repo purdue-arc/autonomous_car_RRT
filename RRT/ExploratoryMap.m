@@ -43,7 +43,7 @@ classdef ExploratoryMap < Map
             for i=1:size(points, 1)
                 [row, col] = obj.get_rc_internal(points(i,1), points(i,2));
                 current_vis = abs(0.5 - obj.observation_array(row, col)) * 2;
-                new_vis = vis(3);
+                new_vis = vis(i);
                 if new_vis > current_vis
                     knowledge = knowledge + new_vis - current_vis;
                 end
@@ -58,9 +58,9 @@ classdef ExploratoryMap < Map
                 current_obs = obj.observation_array(row, col);
                 % Figure out what the new observation is on a scale of 0 to 1
                 if obj.get_cell_internal(points(i,1), points(i,2))
-                    new_obs = 0.5 + 0.5 * vis(3);
+                    new_obs = 0.5 + 0.5 * vis(i);
                 else
-                    new_obs = 0.5 * (1 - vis(3));
+                    new_obs = 0.5 * (1 - vis(i));
                 end
                 % If the new observation is more accurate . . .
                 if abs(.5 - new_obs) > abs(.5 - current_obs)

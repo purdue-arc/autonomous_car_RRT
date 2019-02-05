@@ -9,8 +9,9 @@ y_max = 50;
 num_steps = 120;    % When to stop exploring (in future use while loop?)
 
 create_video = false;
-plot_vis = true;
-display_width = 10;
+plot_vis = false;
+display_width = 15;
+plot_rrt = true;
 
 % Values for exploration
 % simple_map = [0 0 0 0 1;
@@ -40,7 +41,7 @@ evaluation_vector_count = 5;    % Number of vectors to cast when evaluation a po
 view_width = deg2rad(90);       % Field of view of the robot
 max_distance = 10;              % Max distance to consider viewable by robot (linear falloff)
 obstacle_cutoff = 0.55;         % At what point do you assume something is an obstacle
-num_nodes = 250;                % How many nodes to generate per step
+num_nodes = 50;                % How many nodes to generate per step
           
 map = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_vector_count, execution_vector_count, view_width, max_distance, obstacle_cutoff);
 
@@ -59,10 +60,10 @@ cur_view = map.execute_state(cur_state);
 % Initial plot
 set(gcf, 'Position', [300 200 1280 720]);
 colormap(flipud(gray));
-hold on;
 
 % Left plot background never changes
 ax = subplot(1,2,1);                                        % Left plot
+hold on;
 title("Obstacle Map");
 xlabel("X Position (m)");
 ylabel("Y Position (m)");
@@ -78,6 +79,7 @@ end
 
 % Right plot changes consistently, so don't worry about that too much
 ax = subplot(1,2,2);                                        % Right plot
+hold on;
 title("Observation Map");
 xlabel("X Position (m)");
 ylabel("Y Position (m)");
@@ -108,13 +110,24 @@ for i = 2:num_steps+1
         color_view = cmap(color_index, :);
         vis_plot = scatter(cur_view(:,1), cur_view(:,2), max_distance, color_view);       % Visibility
     end
-    if i == 1
+    if i == 2
             plot(state_tree(i-1,1), state_tree(i-1,2), 'r*:');  % Plot this step
     else
         plot(state_tree(i-2:i-1,1), state_tree(i-2:i-1,2), 'r*:');  % Plot this next step
     end
     
-    
+    % Delete all the old stuff if this isn't the first run
+    if i ~= 2
+        if plot_vis
+            delete(vis_plot)
+        end
+        delete(view_obs);
+        if plot_rrt
+            delete(view_rrt_points);
+            delete(view_rrt_lines);
+        end
+        delete(view_car);
+    end
     
     % Right plot
     ax = subplot(1,2,2);
@@ -125,10 +138,20 @@ for i = 2:num_steps+1
     view_min_y = floor(map.scale * (cur_state(2) - display_width/2)) / map.scale;
     view_max_y = floor(map.scale * (cur_state(2) + display_width/2)) / map.scale;
     
+    % ensure they are within bounds
+    view_min_x = max(min(x_max - 1/map.scale, view_min_x), x_min); 
+    view_max_x = max(min(x_max - 1/map.scale, view_max_x), x_min);
+    view_min_y = max(min(y_max - 1/map.scale, view_min_y), y_min);
+    view_max_y = max(min(y_max - 1/map.scale, view_max_y), y_min);
+    
+    % Determine indices
+    [row_min, col_min] = map.get_rc_internal(view_min_x * map.scale, view_max_y * map.scale);
+    [row_max, col_max] = map.get_rc_internal(view_max_x * map.scale, view_min_y * map.scale);
+    
     axis([view_min_x view_max_x view_min_y view_max_y], 'square');                  % Set axis
     % determine observation array subset
-    view_obs_array = map.observation_array(view_min_x:view_max_x * map.scale + 1, y_max * map.scale - view_min_y:view_max_y * map.scale);
-                                                                                                        % Plot image
+    view_obs_array = map.observation_array(row_min:row_max, col_min:col_max);
+    % Plot image
     view_obs = imagesc('XData', [view_min_x + 0.5/map.scale,  view_max_x - 0.5/map.scale], 'YData', [view_max_y - 0.5/map.scale,  view_min_y + 0.5/map.scale], 'CData', view_obs_array);
     
     
@@ -141,13 +164,15 @@ for i = 2:num_steps+1
         control_tree(i,:) = next_control;
         value_tree(i) = next_value;
     
-        % Plot the RRT tree for debug
-        ax.ColorOrderIndex = 4;                                     % Get some nice purple
-        point_array = plot(rrt_tree(:,1), rrt_tree(:,2), '*');      % Plot the nodes
-        % Plot the lines
-        x_points = [rrt_tree(2:end, 1), rrt_tree(rrt_parents(2:end), 1)]';
-        y_points = [rrt_tree(2:end, 2), rrt_tree(rrt_parents(2:end), 2)]';
-        view_rrt = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
+        if plot_rrt
+            % Plot the RRT tree for debug
+            ax.ColorOrderIndex = 4;                                     % Get some nice purple
+            view_rrt_points = plot(rrt_tree(:,1), rrt_tree(:,2), '*');      % Plot the nodes
+            % Plot the lines
+            x_points = [rrt_tree(2:end, 1), rrt_tree(rrt_parents(2:end), 1)]';
+            y_points = [rrt_tree(2:end, 2), rrt_tree(rrt_parents(2:end), 2)]';
+            view_rrt_lines = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
+        end
     end
 
     ax.ColorOrderIndex = 1;                                     % Get some nice blue
@@ -160,14 +185,6 @@ for i = 2:num_steps+1
             fprintf('progress: %d / %d\n', i, num_steps);
         end
     end
-    
-    % Now that we have that frame, delete everything
-    if plot_vis
-        delete(vis_plot)
-    end
-    delete(view_obs);
-    delete(view_rrt);
-    delete(view_car);
 end
 
 if create_video
