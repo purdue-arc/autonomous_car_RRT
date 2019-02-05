@@ -15,6 +15,38 @@
 % Large sizing - use units properly
 % Additional - linspace for calculating raycast angles
 
+%% testing creating array of points to sample
+
+% original
+min_x = 0;
+min_y = 0;
+max_x = 100;
+max_y = 100;
+
+num_points = (max_x - min_x+1) * (max_y - min_y+1);
+box_points = zeros(num_points, 2, 'int16');             % col 1: x, col 2: y
+
+% Populate this array with points
+x = min_x;
+y = min_y;
+for i=1:num_points
+    box_points(i, 1) = x;
+    box_points(i, 2) = y;
+    x = x + 1;
+    if x > max_x
+        x = min_x;
+        y = y + 1;
+    end
+end
+xs = repmat(min_x:max_x, 1, max_y-min_y+1);
+ys = repelem(min_y:max_y, max_x-min_x+1);
+box_points_new = [xs', ys'];
+
+diff = box_points ~= box_points_new;
+diff_index = find(diff);
+
+%% other
+
 filename = "100_map.mat";
 mat = matfile(filename);
 simple_map = mat.obstacle_matrix;

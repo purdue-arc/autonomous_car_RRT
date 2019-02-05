@@ -112,21 +112,9 @@ classdef ExploratoryMap < Map
             max_y = max(polygon_y, [], 'all');
 
             % Generate an array of these points to pass into the inpolygon function
-            num_points = (max_x - min_x) * (max_y - min_y);
-            box_points = zeros(num_points, 2, 'int16');             % col 1: x, col 2: y
-
-            % Populate this array with points
-            x = min_x;
-            y = min_y;
-            for i=1:num_points
-                box_points(i, 1) = x;
-                box_points(i, 2) = y;
-                x = x + 1;
-                if x >= max_x
-                    x = min_x;
-                    y = y + 1;
-                end
-            end
+            xs = repmat(min_x:max_x, 1, max_y-min_y+1);
+            ys = repelem(min_y:max_y, max_x-min_x+1);
+            box_points = [xs', ys'];
 
             % Figure out which of these points are visible (inside the generated n-gon)
             box_points_vis = inpolygon(box_points(:,1), box_points(:,2), polygon_x, polygon_y);
