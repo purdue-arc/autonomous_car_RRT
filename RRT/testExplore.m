@@ -8,7 +8,9 @@ y_min = 0;
 y_max = 50;
 num_steps = 120;    % When to stop exploring (in future use while loop?)
 
-create_video = true;
+create_video = false;
+plot_vis = true;
+display_width = 10;
 
 % Values for exploration
 % simple_map = [0 0 0 0 1;
@@ -57,6 +59,28 @@ cur_view = map.execute_state(cur_state);
 % Initial plot
 set(gcf, 'Position', [300 200 1280 720]);
 colormap(flipud(gray));
+hold on;
+
+% Left plot background never changes
+ax = subplot(1,2,1);                                        % Left plot
+title("Obstacle Map");
+xlabel("X Position (m)");
+ylabel("Y Position (m)");
+
+axis([x_min x_max y_min y_max], 'square');                  % Set axis
+                                                            % Plot image
+imagesc('XData', [x_min + 0.5/map.scale,  x_max - 0.5/map.scale], 'YData', [x_max - 0.5/map.scale,  x_min + 0.5/map.scale], 'CData', map.obstacle_array);
+
+% Set up array of colors (if needed)
+if plot_vis
+    cmap = flipud(autumn(100));
+end
+
+% Right plot changes consistently, so don't worry about that too much
+ax = subplot(1,2,2);                                        % Right plot
+title("Observation Map");
+xlabel("X Position (m)");
+ylabel("Y Position (m)");
 
 if create_video
     set(gcf,'menubar','none')
@@ -72,28 +96,41 @@ for i = 2:num_steps+1
     cur_view =  map.execute_state(cur_state);
     
     % Update the graphs
-    clf;                                                        % Clear old stuff (since it can hang slightly off screen)
-    ax = subplot(1,2,1);                                        % Left plot
-    title("Obstacle Map");
-    xlabel("X Position (m)");
-    ylabel("Y Position (m)");
-    hold on;
-    axis([x_min x_max y_min y_max], 'square');                  % Set axis
-                                                                % Plot image
-    imagesc('XData', [x_min + 0.5/map.scale,  x_max - 0.5/map.scale], 'YData', [x_max - 0.5/map.scale,  x_min + 0.5/map.scale], 'CData', map.obstacle_array);
-    ax.ColorOrderIndex = 1;                                     % Make vis blue for consistency
-    scatter(cur_view(:,1), cur_view(:,2), round(cur_view(:,3)*9)+1);       % Visibility
-    scatter(cur_state(1), cur_state(2), 'filled');              % Car
     
-    ax = subplot(1,2,2);                                        % Right plot
-    title("Observation Map");
-    xlabel("X Position (m)");
-    ylabel("Y Position (m)");
-    hold on;
-    axis([x_min x_max y_min y_max], 'square');                  % Set axis
-                                                                % Plot image
-    imagesc('XData', [x_min + 0.5/map.scale,  x_max - 0.5/map.scale], 'YData', [x_max - 0.5/map.scale,  x_min + 0.5/map.scale], 'CData', map.observation_array);
-    plot(state_tree(1:i-1,1), state_tree(1:i-1,2), 'r*:');      % Plot the path taken
+    % Left plot needs the path and possibly current visibility
+    ax = subplot(1,2,1);
+    if plot_vis
+        if i ~= 2
+            delete(vis_plot)
+            % This isn't very clean, but it should work
+        end
+        color_index = uint8(cur_view(:,3) * 99) + 1;
+        color_view = cmap(color_index, :);
+        vis_plot = scatter(cur_view(:,1), cur_view(:,2), max_distance, color_view);       % Visibility
+    end
+    if i == 1
+            plot(state_tree(i-1,1), state_tree(i-1,2), 'r*:');  % Plot this step
+    else
+        plot(state_tree(i-2:i-1,1), state_tree(i-2:i-1,2), 'r*:');  % Plot this next step
+    end
+    
+    
+    
+    % Right plot
+    ax = subplot(1,2,2);
+    
+    % Determine the bounds for the "zoomed" view
+    view_min_x = floor(map.scale * (cur_state(1) - display_width/2)) / map.scale;
+    view_max_x = floor(map.scale * (cur_state(1) + display_width/2)) / map.scale;
+    view_min_y = floor(map.scale * (cur_state(2) - display_width/2)) / map.scale;
+    view_max_y = floor(map.scale * (cur_state(2) + display_width/2)) / map.scale;
+    
+    axis([view_min_x view_max_x view_min_y view_max_y], 'square');                  % Set axis
+    % determine observation array subset
+    view_obs_array = map.observation_array(view_min_x:view_max_x * map.scale + 1, y_max * map.scale - view_min_y:view_max_y * map.scale);
+                                                                                                        % Plot image
+    view_obs = imagesc('XData', [view_min_x + 0.5/map.scale,  view_max_x - 0.5/map.scale], 'YData', [view_max_y - 0.5/map.scale,  view_min_y + 0.5/map.scale], 'CData', view_obs_array);
+    
     
     if i <= num_steps
         % Choose next path
@@ -110,11 +147,11 @@ for i = 2:num_steps+1
         % Plot the lines
         x_points = [rrt_tree(2:end, 1), rrt_tree(rrt_parents(2:end), 1)]';
         y_points = [rrt_tree(2:end, 2), rrt_tree(rrt_parents(2:end), 2)]';
-        line_array = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
+        view_rrt = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');
     end
 
-    ax.ColorOrderIndex = 2;                                     % Get some nice orange
-    scatter(cur_state(1), cur_state(2), 'filled');              % Car
+    ax.ColorOrderIndex = 1;                                     % Get some nice blue
+    view_car = scatter(cur_state(1), cur_state(2), 'filled');              % Car
     drawnow;
     if create_video
         frame = getframe(gcf);
@@ -123,6 +160,14 @@ for i = 2:num_steps+1
             fprintf('progress: %d / %d\n', i, num_steps);
         end
     end
+    
+    % Now that we have that frame, delete everything
+    if plot_vis
+        delete(vis_plot)
+    end
+    delete(view_obs);
+    delete(view_rrt);
+    delete(view_car);
 end
 
 if create_video
