@@ -111,7 +111,7 @@ classdef ExploratoryMap < Map
 
             % Generate an array of these points to pass into the inpolygon function
             num_points = (max_x - min_x) * (max_y - min_y);
-            box_points = zeros(num_points, 3, 'int16');             % col 1: x, col 2: y
+            box_points = zeros(num_points, 2, 'int16');             % col 1: x, col 2: y
 
             % Populate this array with points
             x = min_x;
@@ -133,7 +133,7 @@ classdef ExploratoryMap < Map
             visible_points = box_points(box_points_vis, :);  % col 1: x, col 2: y
 
             % Figure out how well you see these points
-            dist = sqrt(double((visible_points(:,1) - pos_x).^2 + visible_points(:,2).^2));
+            dist = sqrt(double((visible_points(:,1) - pos_x).^2 + (visible_points(:,2) - pos_y).^2));
             visible_points_vis = max([1 - dist/(obj.scale*obj.max_distance), zeros(size(visible_points, 1),1)], [], 2);
         end
         

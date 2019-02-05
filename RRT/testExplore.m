@@ -9,7 +9,7 @@ y_max = 50;
 num_steps = 120;    % When to stop exploring (in future use while loop?)
 
 create_video = false;
-plot_vis = false;
+plot_vis = true;
 display_width = 15;
 plot_rrt = true;
 
@@ -98,24 +98,6 @@ for i = 2:num_steps+1
     cur_view =  map.execute_state(cur_state);
     
     % Update the graphs
-    
-    % Left plot needs the path and possibly current visibility
-    ax = subplot(1,2,1);
-    if plot_vis
-        if i ~= 2
-            delete(vis_plot)
-            % This isn't very clean, but it should work
-        end
-        color_index = uint8(cur_view(:,3) * 99) + 1;
-        color_view = cmap(color_index, :);
-        vis_plot = scatter(cur_view(:,1), cur_view(:,2), max_distance, color_view);       % Visibility
-    end
-    if i == 2
-            plot(state_tree(i-1,1), state_tree(i-1,2), 'r*:');  % Plot this step
-    else
-        plot(state_tree(i-2:i-1,1), state_tree(i-2:i-1,2), 'r*:');  % Plot this next step
-    end
-    
     % Delete all the old stuff if this isn't the first run
     if i ~= 2
         if plot_vis
@@ -127,6 +109,19 @@ for i = 2:num_steps+1
             delete(view_rrt_lines);
         end
         delete(view_car);
+    end
+    
+    % Left plot needs the path and possibly current visibility
+    ax = subplot(1,2,1);
+    if plot_vis
+        color_index = uint8(cur_view(:,3) * 99) + 1;
+        color_view = cmap(color_index, :);
+        vis_plot = scatter(cur_view(:,1), cur_view(:,2), max_distance, color_view);       % Visibility
+    end
+    if i == 2
+            plot(state_tree(i-1,1), state_tree(i-1,2), 'r*:');  % Plot this step
+    else
+        plot(state_tree(i-2:i-1,1), state_tree(i-2:i-1,2), 'r*:');  % Plot this next step
     end
     
     % Right plot
