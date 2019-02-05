@@ -45,8 +45,8 @@ evaluation_vector_count = 5;    % Number of vectors to cast when evaluation a po
 view_width = deg2rad(90);       % Field of view of the robot
 max_distance = 10;              % Max distance to consider viewable by robot (linear falloff)
 obstacle_cutoff = 0.55;         % At what point do you assume something is an obstacle
-num_nodes = 100;                % How many nodes to generate per step
-explore_radius = 5;             % What radius to generate RRT nodes in
+num_nodes = 150;                % How many nodes to generate per step
+explore_radius = 10;            % What radius to generate RRT nodes in
 
 %% Initial settings
           
