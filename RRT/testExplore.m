@@ -139,11 +139,21 @@ for i = 2:num_steps+1
     view_max_y = floor(map.scale * (cur_state(2) + display_width/2)) / map.scale;
     
     % ensure they are within bounds
-    view_min_x = max(min(x_max - 1/map.scale, view_min_x), x_min); 
-    view_max_x = max(min(x_max - 1/map.scale, view_max_x), x_min);
-    view_min_y = max(min(y_max - 1/map.scale, view_min_y), y_min);
-    view_max_y = max(min(y_max - 1/map.scale, view_max_y), y_min);
-    
+    if view_min_x < 0
+        view_min_x = x_min;
+        view_max_x = view_min_x + display_width;
+    elseif view_max_x >= x_max
+        view_max_x = x_max - 1/map.scale;
+        view_min_x = view_max_x - display_width;
+    end
+    if view_min_y < 0
+        view_min_y = y_min;
+        view_max_y = view_min_y + display_width;
+    elseif view_max_y >= y_max
+        view_max_y = y_max - 1/map.scale;
+        view_min_y = view_max_y - display_width;
+    end
+       
     % Determine indices
     [row_min, col_min] = map.get_rc_internal(view_min_x * map.scale, view_max_y * map.scale);
     [row_max, col_max] = map.get_rc_internal(view_max_x * map.scale, view_min_y * map.scale);
