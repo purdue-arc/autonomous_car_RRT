@@ -11,7 +11,7 @@ function [next_state, next_control, next_value, state_tree, parents] = explore(m
     % Perform RRT
     for i = 2:num_nodes
         % Pass this to extend function and add the resulting state to the array
-        [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, i, false);
+        [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, i, @(~)map.gen_rand_explore_pos(cur_state(1), cur_state(2)), @map.check_pos_explore);
     end
 
     % Create knowledge and cost array
@@ -33,7 +33,7 @@ function [next_state, next_control, next_value, state_tree, parents] = explore(m
 
         % Update parent
         knowledge_tree(parent_index,2) = knowledge_tree(parent_index,2) + knowledge_tree(i,2);              % Add self + children knowledge to parent
-        distance_tree(parent_index,2) = distance_tree(parent_index,2) + [distance + distance_tree(i,2)];    % Add self + children distance to parent
+        distance_tree(parent_index,2) = distance_tree(parent_index,2) + distance + distance_tree(i,2);      % Add self + children distance to parent
     end
 
     % Determine distance weight
@@ -51,28 +51,3 @@ function [next_state, next_control, next_value, state_tree, parents] = explore(m
     % Determine the state and required control
     next_state = state_tree(possible_states(next_state_index), :);
     next_control = control_tree(possible_states(next_state_index), :);
-
-% colormap(flipud(gray));
-% subplot(1,2,1);                                             % Left plot
-% hold on;
-% axis([x_min x_max y_min y_max], 'square');                  % Set axis
-%                                                             % Plot image
-% imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.obstacle_array);
-% scatter(view(:,1), view(:,2), round(view(:,3)*24)+1);       % Visibility
-% scatter(state(1), state(2), 'filled');                      % Car
-% 
-% ax = subplot(1,2,2);                                        % Right plot
-% hold on;
-% axis([x_min x_max y_min y_max], 'square');                  % Set axis
-%                                                             % Plot image
-% imagesc('XData',[x_min+1/(scale*2) x_max-1/(scale*2)],'YData',[y_max-1/(scale*2) y_min+1/(scale*2)],'CData',map.observation_array);
-% ax.ColorOrderIndex = 2;                                     % Get some nice orange
-% scatter(state(1), state(2), 100, 'filled');                 % Car
-% ax.ColorOrderIndex = 4;                                     % Get some nice purple
-% point_array = plot(state_tree(:,1), state_tree(:,2), '*');  % Plot the nodes
-% scatter(next_state(1), next_state(2), 'filled');                      % Next State
-% 
-% % lets make some lines
-% x_points = [state_tree(2:end, 1), state_tree(parents(2:end), 1)]';
-% y_points = [state_tree(2:end, 2), state_tree(parents(2:end), 2)]';
-% line_array = line(x_points, y_points, 'Color', 'blue', 'LineStyle', ':');

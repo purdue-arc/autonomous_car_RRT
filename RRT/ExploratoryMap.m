@@ -17,10 +17,11 @@ classdef ExploratoryMap < Map
         max_distance
         obstacle_cuttoff
         free_space
+        explore_radius
     end
 
     methods
-        function obj = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_vector_count, execution_vector_count, view_width, max_distance, obstacle_cutoff)
+        function obj = ExploratoryMap(x_min, x_max, y_min, y_max, scale, simple_map, evaluation_vector_count, execution_vector_count, view_width, max_distance, obstacle_cutoff, explore_radius)
             % Constructor
             obj = obj@Map(x_min, x_max, y_min, y_max, scale, simple_map);
             obj.observation_array = ones(size(obj.obstacle_array)) * 0.5; % Everything has weight of 0 to start
@@ -29,6 +30,7 @@ classdef ExploratoryMap < Map
             obj.view_width = view_width;
             obj.max_distance = max_distance;
             obj.obstacle_cuttoff = obstacle_cutoff;
+            obj.explore_radius = explore_radius;
             
             % Used to determine the exploration progress
             obj.free_space = sum(~obj.obstacle_array, 'all');           
@@ -181,6 +183,26 @@ classdef ExploratoryMap < Map
             % Since we only see the edges, it isn't worth even making sure the new point is free
             x_pos = rand * (obj.x_max - obj.x_min) + obj.x_min;
             y_pos = rand * (obj.y_max - obj.y_min) + obj.y_min;
+        end
+        
+        function [x_pos, y_pos] = gen_rand_explore_pos(obj, cur_x, cur_y)
+            % Generate a random postion within the bounds
+            % Override of Map class method that generates position in free space
+            % Since we only see the edges, it isn't worth even making sure the new point is free
+            % Also, should only generate within a certain radius of the vehicle to get more branched paths
+            for i = 1:100 % try up to 100 times
+                rand_radius = rand * obj.explore_radius;
+                rand_angle = rand * 2 * pi;
+                x_pos = cur_x + rand_radius * cos(rand_angle);
+                y_pos = cur_y + rand_radius * sin(rand_angle);
+                if obj.check_pos_explore(x_pos, y_pos)
+                    return;
+                end
+                if i == 100
+                    fprintf('Failed to generate random position\n');
+                    return;
+                end
+            end
         end
         
         function valid = check_pos_explore(obj, x_pos, y_pos)
