@@ -65,6 +65,7 @@ state_tree(1,:) = cur_state;
 cur_view = map.execute_state(cur_state);
 
 %% Initial plot settings
+figure(1);
 set(gcf, 'Position', [300 200 1280 720]);
 colormap(flipud(gray));
 
@@ -170,7 +171,7 @@ for i = 2:num_steps+1
     if i <= num_steps
         % Choose next path
         [next_state, next_control, next_value, rrt_tree, rrt_parents] = explore(map, cur_state, num_nodes);
-
+        
         % Update arrays
         state_tree(i,:) = next_state;
         control_tree(i,:) = next_control;

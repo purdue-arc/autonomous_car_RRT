@@ -15,9 +15,9 @@ function [state_tree, parents, control_tree] = extend(state_tree, parents, contr
     for attempt = 1:num_attempts % Up to num_attempts tries before it aborts
         % Generate random pos
         [rand_pos_x, rand_pos_y] = generator();
-
+        
         % Find nearest point
-        dist = sqrt((state_tree(:,1) - rand_pos_x).^2 + (state_tree(:,2) - rand_pos_y).^2);
+        dist = sqrt((state_tree(1:(cur_node-1),1) - rand_pos_x).^2 + (state_tree(1:(cur_node-1),2) - rand_pos_y).^2);
         [~, min_index] = min(dist);
 
         % From the selected node, come up with a random control vector
