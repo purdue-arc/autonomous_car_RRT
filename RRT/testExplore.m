@@ -2,7 +2,7 @@ close all
 clear variables
 
 %% run settings
-create_video = false;
+create_video = true;
 plot_vis = true;
 display_width = 15;
 plot_rrt = true;
@@ -37,7 +37,7 @@ x_max = 50;
 y_min = 0;
 y_max = 50;
 
-num_steps = 120;    % When to stop exploring (in future use while loop?)
+num_steps = 250;    % When to stop exploring (in future use while loop?)
 
 scale = 10;                     % there should be how many cell-lengths per unit (meter)
 execution_vector_count = 91;    % Number of vectors to cast when executing a postion, increases accuracy, but also calculation time
@@ -45,7 +45,7 @@ evaluation_vector_count = 5;    % Number of vectors to cast when evaluation a po
 view_width = deg2rad(90);       % Field of view of the robot
 max_distance = 10;              % Max distance to consider viewable by robot (linear falloff)
 obstacle_cutoff = 0.55;         % At what point do you assume something is an obstacle
-num_nodes = 50;                 % How many nodes to generate per step
+num_nodes = 100;                % How many nodes to generate per step
 explore_radius = 5;             % What radius to generate RRT nodes in
 
 %% Initial settings
