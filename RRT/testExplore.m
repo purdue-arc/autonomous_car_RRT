@@ -2,10 +2,11 @@ close all
 clear variables
 
 %% run settings
-create_video = false;
+create_video = true;
 plot_vis = true;
 display_width = 15;
 plot_rrt = true;
+use_random = false;
 
 %% old maps
 % Values for exploration
@@ -45,7 +46,7 @@ evaluation_vector_count = 5;    % Number of vectors to cast when evaluation a po
 view_width = deg2rad(90);       % Field of view of the robot
 max_distance = 10;              % Max distance to consider viewable by robot (linear falloff)
 obstacle_cutoff = 0.55;         % At what point do you assume something is an obstacle
-num_nodes = 150;                % How many nodes to generate per step
+num_nodes = 100;                % How many nodes to generate per step
 explore_radius = 10;            % What radius to generate RRT nodes in
 
 %% Initial settings
@@ -66,7 +67,8 @@ cur_view = map.execute_state(cur_state);
 
 %% Initial plot settings
 figure(1);
-set(gcf, 'Position', [300 200 1280 720]);
+%set(gcf, 'Position', [300 200 1280 720]);
+set(gcf, 'Position', [0 0 1920 1080]);
 colormap(flipud(gray));
 
 % Left plot background never changes
@@ -176,6 +178,13 @@ for i = 2:num_steps+1
     if i <= num_steps
         % Choose next path
         [next_state, next_control, next_value, rrt_tree, rrt_parents] = explore(map, cur_state, num_nodes);
+        
+        if use_random
+            % Completely ignore the ideal path for knowledge and instead pick a random valid path
+            potential_index = find(rrt_parents == 1);
+            next_index = potential_index(round(rand * (size(potential_index, 1) - 1) + 1));
+            next_state = rrt_tree(next_index, :);
+        end
         
         % Update arrays
         state_tree(i,:) = next_state;
