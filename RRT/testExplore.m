@@ -2,7 +2,7 @@ close all
 clear variables
 
 %% run settings
-create_video = true;
+create_video = false;
 plot_vis = true;
 display_width = 15;
 plot_rrt = true;
