@@ -48,6 +48,7 @@ max_distance = 10;              % Max distance to consider viewable by robot (li
 obstacle_cutoff = 0.55;         % At what point do you assume something is an obstacle
 num_nodes = 100;                % How many nodes to generate per step
 explore_radius = 10;            % What radius to generate RRT nodes in
+evaluation_increment = 3;       % Evaluate every nth node
 
 %% Initial settings
           
@@ -136,11 +137,9 @@ for i = 2:num_steps+1
     end
     ax.ColorOrderIndex = 1;                                     % Get some nice blue
     if i == 2
-        %plot(state_tree(i-1,1), state_tree(i-1,2), 'r*:');  % Plot this step
-        scatter(state_tree(i-1,1), state_tree(i-1,2), 'filled');
+        plot(state_tree(i-1,1), state_tree(i-1,2), '*:');  % Plot this step
     else
-        %plot(state_tree(i-2:i-1,1), state_tree(i-2:i-1,2), 'r*:');  % Plot this next step
-        scatter(state_tree(i-2:i-1,1), state_tree(i-2:i-1,2), 'filled');
+        plot(state_tree(i-2:i-1,1), state_tree(i-2:i-1,2), '*:');  % Plot this next step
     end
     
     % Right plot
@@ -181,7 +180,7 @@ for i = 2:num_steps+1
     
     if i <= num_steps
         % Choose next path
-        [next_state, next_control, next_value, rrt_tree, rrt_parents] = explore(map, cur_state, num_nodes, 3);
+        [next_state, next_control, next_value, rrt_tree, rrt_parents] = explore(map, cur_state, num_nodes, evaluation_increment);
         
         if use_random
             % Completely ignore the ideal path for knowledge and instead pick a random valid path
