@@ -2,7 +2,7 @@ close all
 clear variables
 
 %% run settings
-create_video = true;
+create_video = false;
 plot_vis = true;
 display_width = 15;
 plot_rrt = true;
@@ -37,7 +37,7 @@ x_max = 50;
 y_min = 0;
 y_max = 50;
 
-num_steps = 250;    % When to stop exploring (in future use while loop?)
+num_steps = 251;    % When to stop exploring (in future use while loop?)
 
 scale = 10;                     % there should be how many cell-lengths per unit (meter)
 execution_vector_count = 91;    % Number of vectors to cast when executing a postion, increases accuracy, but also calculation time
@@ -106,18 +106,23 @@ for i = 2:num_steps+1
     cur_view =  map.execute_state(cur_state);
     
     % Update the graphs
+    figure(1);
     % Delete all the old stuff if this isn't the first run
     if i ~= 2
         if plot_vis
             delete(vis_plot)
         end
-        delete(view_obs);
+        
         if plot_rrt
             delete(view_rrt_points);
             delete(view_rrt_lines);
         end
+        delete(view_obs);
         delete(view_car);
+        delete(view_title);
     end
+    
+    view_title = sgtitle(sprintf("Autonomous RRT Exploration\nElapsed Time: %3.1f sec       Exploration Progress: %02.1f%%", (i-2)/10, map.get_exploration_progress()*100));
     
     % Left plot needs the path and possibly current visibility
     ax = subplot(1,2,1);
