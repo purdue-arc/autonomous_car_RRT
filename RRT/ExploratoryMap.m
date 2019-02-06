@@ -16,7 +16,6 @@ classdef ExploratoryMap < Map
         view_width
         max_distance
         obstacle_cuttoff
-        free_space
         explore_radius
     end
 
@@ -30,10 +29,7 @@ classdef ExploratoryMap < Map
             obj.view_width = view_width;
             obj.max_distance = max_distance;
             obj.obstacle_cuttoff = obstacle_cutoff;
-            obj.explore_radius = explore_radius;
-            
-            % Used to determine the exploration progress
-            obj.free_space = sum(~obj.obstacle_array, 'all');           
+            obj.explore_radius = explore_radius;        
         end
         
         function knowledge = evaluate_state(obj, state)
@@ -202,8 +198,8 @@ classdef ExploratoryMap < Map
         
         function progress = get_exploration_progress(obj)
             % Determine what percentage of the obstacle free map has been explored
-            observation = sum(~obj.obstacle_array .* (0.5 - obj.observation_array) * 2, 'all');
-            progress = observation / obj.free_space;
+            cur_mean = mean(obj.observation_array(~obj.obstacle_array));    % Mean value of all free space
+            progress = (0.5 - cur_mean) / 0.5;                              % Completion progress
         end
     end
 end
