@@ -2,7 +2,7 @@ close all
 clear variables
 
 %% run settings
-create_video = false;
+create_video = true;
 plot_vis = true;
 display_width = 15;
 plot_rrt = true;
@@ -181,7 +181,7 @@ for i = 2:num_steps+1
     
     if i <= num_steps
         % Choose next path
-        [next_state, next_control, next_value, rrt_tree, rrt_parents] = explore(map, cur_state, num_nodes);
+        [next_state, next_control, next_value, rrt_tree, rrt_parents] = explore(map, cur_state, num_nodes, 3);
         
         if use_random
             % Completely ignore the ideal path for knowledge and instead pick a random valid path

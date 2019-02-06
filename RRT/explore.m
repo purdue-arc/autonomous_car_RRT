@@ -1,4 +1,4 @@
-function [next_state, next_control, next_value, state_tree, parents] = explore(map, cur_state, num_nodes)
+function [next_state, next_control, next_value, state_tree, parents] = explore(map, cur_state, num_nodes, evaluation_increment)
 
     % Create RRT arrays
     state_tree = zeros(num_nodes, 5);   % State at each node
@@ -19,12 +19,22 @@ function [next_state, next_control, next_value, state_tree, parents] = explore(m
 
     % Compute knowledge and cost
     for i = num_nodes:-1:2 % Work backwards through tree
-        parent_index = parents(i);
-        % Calc knowledge and distance values
-        knowledge = map.evaluate_state(state_tree(i,:));
         
+        % Determine number of parents
+        num_parents = countParents(parents, i);
+        
+        % Calculate knowledge if it is the right increment
+        if mod(num_parents, evaluation_increment) == 0
+            knowledge = map.evaluate_state(state_tree(i,:));
+        else
+            knowledge = 0;
+        end
+        
+        parent_index = parents(i);
+
         % Update self
-        knowledge_tree(i,:) = knowledge_tree(i,:) + [knowledge, knowledge];
+        knowledge_tree(i,1) = knowledge;
+        knowledge_tree(i,2) = knowledge_tree(i,2) + knowledge;
 
         % Update parent
         knowledge_tree(parent_index,2) = knowledge_tree(parent_index,2) + knowledge_tree(i,2);  % Add self + children knowledge to parent
