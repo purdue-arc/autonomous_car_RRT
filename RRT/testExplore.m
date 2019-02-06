@@ -48,7 +48,7 @@ max_distance = 10;              % Max distance to consider viewable by robot (li
 obstacle_cutoff = 0.55;         % At what point do you assume something is an obstacle
 num_nodes = 100;                % How many nodes to generate per step
 explore_radius = 10;            % What radius to generate RRT nodes in
-evaluation_increment = 3;       % Evaluate every nth node
+evaluation_increment = 2;       % Evaluate every nth node
 
 %% Initial settings
           
