@@ -84,7 +84,8 @@ imagesc('XData', [x_min + 0.5/map.scale,  x_max - 0.5/map.scale], 'YData', [x_ma
 
 % Set up array of colors (if needed)
 if plot_vis
-    cmap = flipud(autumn(100));
+    cmap = [linspace(1, 0, 100)', linspace(1, 0, 100)', linspace(1, 1, 100)'];
+    %cmap = flipud(autumn(100));
 end
 
 % Right plot changes consistently, so don't worry about that too much
@@ -133,10 +134,13 @@ for i = 2:num_steps+1
         color_view = cmap(color_index, :);
         vis_plot = scatter(cur_view(:,1), cur_view(:,2), max_distance, color_view);       % Visibility
     end
+    ax.ColorOrderIndex = 1;                                     % Get some nice blue
     if i == 2
-            plot(state_tree(i-1,1), state_tree(i-1,2), 'r*:');  % Plot this step
+        %plot(state_tree(i-1,1), state_tree(i-1,2), 'r*:');  % Plot this step
+        scatter(state_tree(i-1,1), state_tree(i-1,2), 'filled');
     else
-        plot(state_tree(i-2:i-1,1), state_tree(i-2:i-1,2), 'r*:');  % Plot this next step
+        %plot(state_tree(i-2:i-1,1), state_tree(i-2:i-1,2), 'r*:');  % Plot this next step
+        scatter(state_tree(i-2:i-1,1), state_tree(i-2:i-1,2), 'filled');
     end
     
     % Right plot
