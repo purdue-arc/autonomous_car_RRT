@@ -95,7 +95,7 @@ classdef AutoRallyCar
             wf = 0;
             wr = 0;
             
-            hs = 0.115; %Sprung height
+            hs = 0.110; %Sprung height
             hc = 0.115; %Height of rolling pivot
             
             Zs = 0.115;
