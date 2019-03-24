@@ -2,7 +2,7 @@ close all
 clear variables
 
 %% run settings
-create_video = true;
+create_video = false;
 plot_vis = true;
 display_width = 15;
 plot_rrt = true;
@@ -68,8 +68,8 @@ cur_view = map.execute_state(cur_state);
 
 %% Initial plot settings
 figure(1);
-%set(gcf, 'Position', [300 200 1280 720]);
-set(gcf, 'Position', [0 0 1920 1080]);
+set(gcf, 'Position', [300 200 1280 720]);
+%set(gcf, 'Position', [0 0 1920 1080]);
 colormap(flipud(gray));
 
 % Left plot background never changes
