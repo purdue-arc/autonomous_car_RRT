@@ -7,6 +7,7 @@ x_max = 10;
 y_min = 0;
 y_max = 10;
 radius = 0.25;
+num_nodes = 5000;
 
 % Plot / video export values
 use_obstacles = true;
@@ -15,46 +16,33 @@ create_video = false;
 create_imgs = false;
 
 % Values for exploration
-simple_map = [0 0 0 0 1;
-              0 0 1 0 0;
-              0 1 1 1 0;
-              0 0 0 1 0;
-              0 0 0 0 0];
-          
-% This is the "high res" map that we will be using. Will assume 10 meter by
-% 10 meter with resolution of 10 cm
-map = zeros(100,100);
-
-% Need to populate the true map with values 
 if use_obstacles
-    for i=1:5
-        for j=1:5
-            if simple_map(i,j) == 1
-                % Fill in that block
-                for k=(1+20*(i-1)):(20+20*(i-1))
-                    for l=(1+20*(j-1)):(20+20*(j-1))
-                        map(k,l) = 1;
-                    end
-                end
-            end
-        end
-    end
+    simple_map = [0 0 0 0 1;
+                  0 0 1 0 0;
+                  0 1 1 1 0;
+                  0 0 0 1 0;
+                  0 0 0 0 0];
+else
+    simple_map = [0];
 end
 
-state = [0.5, 0.5, pi/4, 0, 0]; % [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
+% (x_min, x_max, y_min, y_max, scale, simple_map)
+map = Map(0, 10, 0, 10, 10, simple_map);
 
-state_tree(1,:) = state;
-parents = 0;
-control_tree = [0, 0];
+% [x CG, y CG, theta, lateral speed(vy), yaw rate(r or thetadot)]
+cur_state = [0.5, 0.5, pi/4, 0, 0]; 
 
-% Function handle for checking if a state is valid
-check_pos_funct = @(pos) check_map_pos(pos, x_min, x_max, y_min, y_max, map);
-% Function handle for creating random points
-rand_pos_funct = @() gen_rand_pos(x_min, x_max, y_min, y_max, check_pos_funct);
+% Create RRT arrays
+state_tree = zeros(num_nodes, 5);   % State at each node
+parents = zeros(num_nodes, 1);      % Parent of each node (index into state_tree)
+control_tree = zeros(num_nodes, 2); % Control to get to each node from parent
 
-for i = 2:5000
+% Populate RRT arrays with initial data
+state_tree(1,:) = cur_state;
+    
+for i = 2:num_nodes
     % Pass this to extend function and add the resulting state to the array
-    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, rand_pos_funct, check_pos_funct);
+    [state_tree, parents, control_tree] = extend(state_tree, parents, control_tree, map, i, @map.gen_rand_pos, @map.check_pos);
 end
 
 % Find path
@@ -73,7 +61,7 @@ if plot_result
     % Display the map
     if use_obstacles
         colormap(flipud(gray));
-        imagesc('XData',[0.05 9.95],'YData',[9.95 0.05],'CData',map);
+        imagesc('XData',[0.05 9.95],'YData',[9.95 0.05],'CData',map.obstacle_array);
     end
     if create_video
         set(gcf,'menubar','none')
@@ -135,46 +123,15 @@ if plot_result
     end
     if create_imgs
         % Export the final frame as an image too
-        [Image, ~] = frame2im(getframe(gcf));
-        imwrite(Image, 'RRT_example.png');
+        [image, ~] = frame2im(getframe(gcf));
+        imwrite(image, 'RRT_example.png');
         for i = 1:size(plot_array,1)
             set(plot_array(i,1),'Visible','off');
             if parents(i) ~= 0
                 set(plot_array(i,2),'Visible','off');
             end
         end
-        [Image, ~] = frame2im(getframe(gcf));
-        imwrite(Image, 'RRT_example_path_only.png');
-    end
-end
-
-function valid = check_map_pos(pos, x_min, x_max, y_min, y_max, map)
-    x_pos = pos(1);
-    y_pos = pos(2);
-    if x_pos > x_min && x_pos < x_max && y_pos > y_min && y_pos < y_max
-        % continue to check for obstacle
-        col = floor(x_pos * 10) + 1;
-        row = 101 - (floor(y_pos * 10) + 1);
-        block = map(row, col);
-        valid = block == 0;
-        return;
-    else
-        valid = false;
-        return;
-    end
-end
-
-function [x_pos,y_pos] = gen_rand_pos(x_min, x_max, y_min, y_max, check_pos_funct)
-    for i = 1:100 % try up to 100 times
-        x_pos = rand(1) * (x_max - x_min) + x_min;
-        y_pos = rand(1) * (y_max - y_min) + y_min;
-        
-        if check_pos_funct([x_pos, y_pos])
-            return;
-        end
-        if i == 100
-            fprintf('Failed to generate random position');
-            return;
-        end
+        [image, ~] = frame2im(getframe(gcf));
+        imwrite(image, 'RRT_example_path_only.png');
     end
 end
