@@ -1,4 +1,4 @@
-classdef map_3d_quad
+classdef map_3d_quad < handle
     %MAP_3D_QUAD Quads in a half-edge mesh used to represent map data
     % This could also be used for any n-gon, where n > 2
     

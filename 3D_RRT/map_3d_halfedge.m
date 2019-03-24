@@ -1,4 +1,4 @@
-classdef map_3d_halfedge
+classdef map_3d_halfedge < handle
     %MAP_3D_HALFEDGE Half edge data used to store map data
     
     properties
